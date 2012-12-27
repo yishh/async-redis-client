@@ -1,6 +1,8 @@
 package mobi.app.test;
 
 import junit.framework.TestCase;
+import mobi.app.redis.ZEntity;
+import mobi.app.redis.ZNumbers;
 import mobi.app.redis.netty.NettyRedisClient;
 
 import java.util.HashMap;
@@ -738,11 +740,11 @@ public class TestNettyRedisClient extends TestCase {
         assertEquals(1, reply);
         reply = client.sadd(key3, "a", "c", "e").get();
         assertEquals(3, reply);
-        List<String>  diff = (List<String>) client.sdiff(key1, key2, key3).get();
+        List<String> diff = (List<String>) client.sdiff(key1, key2, key3).get();
         assertEquals(2, diff.size());
         assertEquals("b", diff.get(0));
         assertEquals("d", diff.get(1));
-        reply =  client.sdiffStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        reply = client.sdiffStore("SET_DIFF_RESULT", key1, key2, key3).get();
         assertEquals(2, reply);
         List<String> cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
         assertEquals(2, cached.size());
@@ -751,7 +753,7 @@ public class TestNettyRedisClient extends TestCase {
         diff = (List<String>) client.sinter(key1, key2, key3).get();
         assertEquals(1, diff.size());
         assertEquals("c", diff.get(0));
-        reply =  client.sinterStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        reply = client.sinterStore("SET_DIFF_RESULT", key1, key2, key3).get();
         assertEquals(1, reply);
         cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
         assertEquals(1, cached.size());
@@ -764,7 +766,7 @@ public class TestNettyRedisClient extends TestCase {
         assertTrue(diff.contains("d"));
         assertTrue(diff.contains("e"));
 
-        reply =  client.sunionStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        reply = client.sunionStore("SET_DIFF_RESULT", key1, key2, key3).get();
         assertEquals(5, reply);
         cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
         assertEquals(5, cached.size());
@@ -796,7 +798,7 @@ public class TestNettyRedisClient extends TestCase {
         assertEquals(4, reply);
         reply = client.sadd(key2, "e").get();
         assertEquals(1, reply);
-        reply = client.smove(key1,  key2, "d").get();
+        reply = client.smove(key1, key2, "d").get();
         assertEquals(1, reply);
         reply = client.scard(key1).get();
         assertEquals(3, reply);
@@ -829,6 +831,219 @@ public class TestNettyRedisClient extends TestCase {
         assertEquals(0, reply);
         reply = client.sisMember(key1, "c").get();
         assertEquals(1, reply);
+
+
+    }
+
+    public void testZadd() throws ExecutionException, InterruptedException {
+        String key = "ZSET_ADD_KEY1";
+        client.delete(key).get();
+        long reply = client.zadd(key, 1, "a").get();
+        assertEquals(1, reply);
+        reply = client.zadd(key, 2, "b", new ZEntity<String>("c", 3)).get();
+        assertEquals(2, reply);
+        reply = client.zcard(key).get();
+        assertEquals(3, reply);
+        reply = client.zcount(key, ZNumbers.MINIMUM, ZNumbers.MAXIMUM).get();
+        assertEquals(3, reply);
+        reply = client.zcount(key, ZNumbers.includeNumber(1), ZNumbers.MAXIMUM).get();
+        assertEquals(3, reply);
+        reply = client.zcount(key, ZNumbers.excludeNumber(1), ZNumbers.MAXIMUM).get();
+        assertEquals(2, reply);
+        List<String> cached = (List<String>) client.zrange(key, 0, 1).get();
+        assertEquals(2, cached.size());
+        assertEquals("a", cached.get(0));
+        assertEquals("b", cached.get(1));
+        List<ZEntity<?>> entitys = client.zrangeWithScores(key, 0, 1).get();
+        assertEquals(2, entitys.size());
+        assertEquals("a", entitys.get(0).member);
+        assertEquals("b", entitys.get(1).member);
+        assertEquals(1.0, entitys.get(0).score);
+        assertEquals(2.0, entitys.get(1).score);
+
+    }
+
+    public void testZinterAndUnion() throws ExecutionException, InterruptedException {
+        String key1 = "ZSET1";
+        String key2 = "ZSET2";
+        client.delete(key1, key2).get();
+        client.zadd(key1, 1, "one");
+        client.zadd(key1, 2, "two");
+        client.zadd(key2, 1, "one");
+        client.zadd(key2, 2, "two");
+        client.zadd(key2, 3, "three");
+        long reply = client.zinterStore("out", new String[]{key1, key2}, new int[]{2, 3}, null).get();
+        assertEquals(2, reply);
+        List<ZEntity<?>> entitys = client.zrangeWithScores("out", 0, -1).get();
+        assertEquals(2, entitys.size());
+        assertEquals("one", entitys.get(0).member);
+        assertEquals("two", entitys.get(1).member);
+        assertEquals(5.0, entitys.get(0).score);
+        assertEquals(10.0, entitys.get(1).score);
+        reply = client.zunionStore("out", new String[]{key1, key2}, new int[]{2, 3}, null).get();
+        assertEquals(3, reply);
+        entitys = client.zrangeWithScores("out", 0, -1).get();
+        assertEquals(3, entitys.size());
+        assertEquals("one", entitys.get(0).member);
+        assertEquals("three", entitys.get(1).member);
+        assertEquals("two", entitys.get(2).member);
+        assertEquals(5.0, entitys.get(0).score);
+        assertEquals(9.0, entitys.get(1).score);
+        assertEquals(10.0, entitys.get(2).score);
+    }
+
+    public void testZIncrBy() throws ExecutionException, InterruptedException {
+        String key = "ZSET_ADD_KEY2";
+        client.delete(key).get();
+        long reply = client.zadd(key, 1, "a").get();
+        assertEquals(1, reply);
+        double score = client.zincrBy(key, 1, "a").get();
+        assertEquals(2.0, score);
+        score = client.zscore(key, "a").get();
+        assertEquals(2.0, score);
+    }
+
+    public void testZrangeByScore() throws ExecutionException, InterruptedException {
+        String key = "ZSET";
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        List<String> cached = (List<String>) client.zrangeByScore(key, ZNumbers.MINIMUM, ZNumbers.MAXIMUM).get();
+        assertEquals(3, cached.size());
+        assertEquals("one", cached.get(0));
+        assertEquals("two", cached.get(1));
+        assertEquals("three", cached.get(2));
+        cached = (List<String>) client.zrangeByScore(key, ZNumbers.includeNumber(1), ZNumbers.includeNumber(2)).get();
+        assertEquals(2, cached.size());
+        assertEquals("one", cached.get(0));
+        assertEquals("two", cached.get(1));
+
+        cached = (List<String>) client.zrangeByScore(key, ZNumbers.includeNumber(1), ZNumbers.includeNumber(2), 1, 1).get();
+        assertEquals(1, cached.size());
+//        assertEquals("one", cached.get(0));
+        assertEquals("two", cached.get(0));
+
+        cached = (List<String>) client.zrangeByScore(key, ZNumbers.excludeNumber(1), ZNumbers.includeNumber(2)).get();
+        assertEquals(1, cached.size());
+        assertEquals("two", cached.get(0));
+        cached = (List<String>) client.zrangeByScore(key, ZNumbers.excludeNumber(1), ZNumbers.excludeNumber(2)).get();
+        assertEquals(0, cached.size());
+
+        List<ZEntity<?>> entitys = client.zrangeByScoreWithScores(key, ZNumbers.includeNumber(1), ZNumbers.includeNumber(2)).get();
+        assertEquals(2, entitys.size());
+
+        assertEquals("one", entitys.get(0).member);
+        assertEquals("two", entitys.get(1).member);
+        assertEquals(1.0, entitys.get(0).score);
+        assertEquals(2.0, entitys.get(1).score);
+
+        entitys = client.zrangeByScoreWithScores(key, ZNumbers.includeNumber(1), ZNumbers.includeNumber(2), 1, 1).get();
+        assertEquals(1, entitys.size());
+
+//        assertEquals("one", entitys.get(0).member);
+        assertEquals("two", entitys.get(0).member);
+//        assertEquals(1.0, entitys.get(0).score);
+        assertEquals(2.0, entitys.get(0).score);
+
+    }
+
+
+    public void testZrank() throws ExecutionException, InterruptedException {
+        String key = "ZSET";
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        long rank = client.zrank(key, "three").get();
+        assertEquals(2, rank);
+        rank = client.zrevRank(key, "three").get();
+        assertEquals(0, rank);
+    }
+
+    public void testZrevRangeByScore() throws ExecutionException, InterruptedException {
+        String key = "ZSET";
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        List<String> cached = (List<String>) client.zrevRange(key, 0, -1).get();
+        assertEquals(3, cached.size());
+        assertEquals("one", cached.get(2));
+        assertEquals("two", cached.get(1));
+        assertEquals("three", cached.get(0));
+
+        cached = (List<String>) client.zrevRangeByScore(key, ZNumbers.includeNumber(2), ZNumbers.includeNumber(1)).get();
+        assertEquals(2, cached.size());
+        assertEquals("two", cached.get(0));
+        assertEquals("one", cached.get(1));
+
+        cached = (List<String>) client.zrevRangeByScore(key, ZNumbers.includeNumber(2), ZNumbers.includeNumber(1), 1, 1).get();
+        assertEquals(1, cached.size());
+//        assertEquals("one", cached.get(0));
+        assertEquals("one", cached.get(0));
+
+        cached = (List<String>) client.zrevRangeByScore(key, ZNumbers.excludeNumber(2), ZNumbers.includeNumber(1)).get();
+        assertEquals(1, cached.size());
+        assertEquals("one", cached.get(0));
+
+        cached = (List<String>) client.zrevRangeByScore(key, ZNumbers.excludeNumber(2), ZNumbers.excludeNumber(1)).get();
+        assertEquals(0, cached.size());
+
+        List<ZEntity<?>> entitys = client.zrevRangeByScoreWithScores(key, ZNumbers.includeNumber(2), ZNumbers.includeNumber(1)).get();
+        assertEquals(2, entitys.size());
+
+        assertEquals("one", entitys.get(1).member);
+        assertEquals("two", entitys.get(0).member);
+        assertEquals(1.0, entitys.get(1).score);
+        assertEquals(2.0, entitys.get(0).score);
+
+        entitys = client.zrevRangeByScoreWithScores(key, ZNumbers.includeNumber(2), ZNumbers.includeNumber(1), 1, 1).get();
+        assertEquals(1, entitys.size());
+
+//        assertEquals("one", entitys.get(0).member);
+        assertEquals("one", entitys.get(0).member);
+//        assertEquals(1.0, entitys.get(0).score);
+        assertEquals(1.0, entitys.get(0).score);
+
+    }
+
+    public void testZrem() throws ExecutionException, InterruptedException {
+        String key = "ZSET";
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        long reply = client.zrem(key, "two").get();
+        assertEquals(1, reply);
+        List<ZEntity<?>> entitys = client.zrangeByScoreWithScores(key, ZNumbers.MINIMUM, ZNumbers.MAXIMUM).get();
+        assertEquals(2, entitys.size());
+        assertEquals("one", entitys.get(0).member);
+        assertEquals("three", entitys.get(1).member);
+        assertEquals(1.0, entitys.get(0).score);
+        assertEquals(3.0, entitys.get(1).score);
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        reply = client.zremRangeByRank(key, 0, 1).get();
+        assertEquals(2, reply);
+        entitys = client.zrangeByScoreWithScores(key, ZNumbers.MINIMUM, ZNumbers.MAXIMUM).get();
+        assertEquals(1, entitys.size());
+        assertEquals("three", entitys.get(0).member);
+        assertEquals(3.0, entitys.get(0).score);
+        client.delete(key).get();
+        client.zadd(key, 1, "one").get();
+        client.zadd(key, 2, "two").get();
+        client.zadd(key, 3, "three").get();
+        reply = client.zremRangeByScore(key, ZNumbers.MINIMUM, ZNumbers.excludeNumber(2)).get();
+        assertEquals(1, reply);
+        entitys = client.zrangeByScoreWithScores(key, ZNumbers.MINIMUM, ZNumbers.MAXIMUM).get();
+        assertEquals(2, entitys.size());
+        assertEquals("two", entitys.get(0).member);
+        assertEquals("three", entitys.get(1).member);
+        assertEquals(2.0, entitys.get(0).score);
+        assertEquals(3.0, entitys.get(1).score);
 
 
     }

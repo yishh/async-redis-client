@@ -20,7 +20,7 @@ async-redis-client
 
 ## 其他
 
-* 不打算实现pipeline功能。因为pipeline主要是为了解决在bio模式下io利用率较低的问题，使用async-redis-client不需要在使用pipeline的功能了。 如下的使用方式即可:
+* 不打算实现pipeline功能。因为pipeline主要是为了解决在bio模式下io利用率较低的问题，使用async-redis-client不需要再使用pipeline的功能了。 如下的使用方式即可:
 
 
 		Future<String> result = client.set("TEST_KEY2", "CACHED");
@@ -28,7 +28,7 @@ async-redis-client
        	String str = result.get();
        	String cachedValue = cached.get();
        	
-* 为set和get方法提供了几个不同的覆盖实现，已区别数值类型和其他对象类型。因为对象类型默认会用java序列化机制序列化存储。数值类型则按照redis的字符串方式存储，以保证incr和decr操作可以正常工作。如下：
+* 为set和get方法提供了几个不同的覆盖实现，以区别数值类型和其他对象类型。对象类型默认会使用内建的序列化机制序列化存储。数值类型则按照redis的字符串方式存储，以保证incr和decr操作可以正常工作。如下：
 
 		Future<String> set(String key, int o);
 		Future<String> set(String key, long o);

@@ -1,7 +1,10 @@
 package mobi.app.redis.netty.command;
 
+import mobi.app.redis.ZEntity;
 import mobi.app.redis.transcoders.Transcoder;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -218,6 +221,11 @@ public enum Commands {
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new HashCommand<String>(transcoder, name(), (String) args[0], (String) args[1], args[2]);
         }
+    }, HSETNX {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new HashCommand<String>(transcoder, name(), (String) args[0], (String) args[1], args[2]);
+        }
     }, HGET {
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             //noinspection RedundantArrayCreation
@@ -423,13 +431,12 @@ public enum Commands {
             else
                 return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
         }
-    }, SREM{
+    }, SREM {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new StringArgsCommand<T>(transcoder, name(), (String) args[0], (Object[]) args[1]);
         }
-    }
-    , SUNION {
+    }, SUNION {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             String key = (String) args[0];
@@ -443,6 +450,188 @@ public enum Commands {
             String key = (String) args[1];
             String[] fields = ((String[]) args[2]);
             return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{destination, key}, fields));
+        }
+    }
+    //sorted sets
+    , ZADD {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new ZaddCommand<T>(transcoder, name(), (String) args[0], (Double) args[1], args[2], (ZEntity<?>[]) args[3]);
+        }
+    }, ZCARD {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, ZCOUNT {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], (String) args[1], (String) args[2]});
+        }
+    }, ZINCRBY {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new ZincrbyCommand<T>(transcoder, name(), (String) args[0], (Double) args[1], args[2]);
+        }
+    }, ZINTERSTORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            List<String> results = new ArrayList<String>();
+            String destination = (String) args[0];
+            results.add(destination);
+            String keyNumbers = String.valueOf(args[1]);
+            results.add(keyNumbers);
+            String[] keys = ((String[]) args[2]);
+            Collections.addAll(results, keys);
+            if (args[3] != null) {
+                results.add("WEIGHTS");
+                int[] weights = (int[]) args[3];
+                for (int weight : weights) {
+                    results.add(String.valueOf(weight));
+                }
+            }
+            String aggregate = (String) args[4];
+            results.add("AGGREGATE");
+            results.add(aggregate);
+            String[] strings = new String[results.size()];
+            results.toArray(strings);
+            return new StringArgsCommand<T>(transcoder, name(), strings);
+        }
+    }, ZUNIONSTORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            List<String> results = new ArrayList<String>();
+            String destination = (String) args[0];
+            results.add(destination);
+            String keyNumbers = String.valueOf(args[1]);
+            results.add(keyNumbers);
+            String[] keys = ((String[]) args[2]);
+            Collections.addAll(results, keys);
+            if (args[3] != null) {
+                results.add("WEIGHTS");
+                int[] weights = (int[]) args[3];
+                for (int weight : weights) {
+                    results.add(String.valueOf(weight));
+                }
+            }
+            String aggregate = (String) args[4];
+            results.add("AGGREGATE");
+            results.add(aggregate);
+            String[] strings = new String[results.size()];
+            results.toArray(strings);
+            return new StringArgsCommand<T>(transcoder, name(), strings);
+        }
+    }, ZRANGE {
+        @SuppressWarnings("RedundantArrayCreation")
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args.length == 4)
+                return new ZWithScoreCommand<T>(transcoder, name(), (String) args[0], new String[]{String.valueOf(args[1]), String.valueOf(args[2]), (String) args[3]});
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]), String.valueOf(args[2])});
+        }
+    }, ZRANGEBYSCORE {
+        @SuppressWarnings("RedundantArrayCreation")
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String key = (String) args[0];
+            String min = (String) args[1];
+            String max = (String) args[2];
+            String offset = null;
+            String count = null;
+            if (args.length == 6) {
+                offset = String.valueOf(args[4]);
+                count = String.valueOf(args[5]);
+            }
+            if (args[3] != null) {
+                String[] arguments;
+                if (offset != null) {
+                    arguments = new String[]{min, max, "WITHSCORES", "LIMIT", offset, count};
+                } else {
+                    arguments = new String[]{min, max, "WITHSCORES"};
+                }
+                return new ZWithScoreCommand<T>(transcoder, name(), key, arguments);
+            } else {
+                String[] arguments;
+                if (offset != null) {
+                    arguments = new String[]{key, min, max, "LIMIT", offset, count};
+                } else {
+                    arguments = new String[]{key, min, max};
+                }
+                return new StringArgsCommand<T>(transcoder, name(), arguments);
+            }
+        }
+    },ZRANK{
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], args[1]);
+        }
+    },ZREM {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], (Object[]) args[1]);
+        }
+    },ZREMRANGEBYRANK{
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]),  String.valueOf(args[2])});
+        }
+    }, ZREMRANGEBYSCORE{
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], (String) args[1], (String) args[2]});
+        }
+    } , ZREVRANGE{
+        @SuppressWarnings("RedundantArrayCreation")
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args.length == 4)
+                return new ZWithScoreCommand<T>(transcoder, name(), (String) args[0], new String[]{String.valueOf(args[1]), String.valueOf(args[2]), (String) args[3]});
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]), String.valueOf(args[2])});
+        }
+    }, ZREVRANGEBYSCORE{
+        @SuppressWarnings("RedundantArrayCreation")
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String key = (String) args[0];
+            String max = (String) args[1];
+            String min = (String) args[2];
+            String offset = null;
+            String count = null;
+            if (args.length == 6) {
+                offset = String.valueOf(args[4]);
+                count = String.valueOf(args[5]);
+            }
+            if (args[3] != null) {
+                String[] arguments;
+                if (offset != null) {
+                    arguments = new String[]{max, min, "WITHSCORES", "LIMIT", offset, count};
+                } else {
+                    arguments = new String[]{max, min, "WITHSCORES"};
+                }
+                return new ZWithScoreCommand<T>(transcoder, name(), key, arguments);
+            } else {
+                String[] arguments;
+                if (offset != null) {
+                    arguments = new String[]{key, max, min, "LIMIT", offset, count};
+                } else {
+                    arguments = new String[]{key, max, min};
+                }
+                return new StringArgsCommand<T>(transcoder, name(), arguments);
+            }
+        }
+    }, ZREVRANK{
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], args[1]);
+        }
+    }
+    , ZSCORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new ZScoreCommand<T>(transcoder, name(), (String) args[0], args[1]);
         }
     };
 

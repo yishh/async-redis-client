@@ -1,6 +1,8 @@
 package mobi.app.redis.netty;
 
 import mobi.app.redis.AsyncRedisClient;
+import mobi.app.redis.ZEntity;
+import mobi.app.redis.ZSetAggregate;
 import mobi.app.redis.netty.command.Command;
 import mobi.app.redis.netty.command.Commands;
 import mobi.app.redis.netty.reply.Reply;
@@ -514,22 +516,26 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public Future<Long> hsetNx(String key, String field, int o) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        //noinspection unchecked
+        return sendCommand(Commands.HSETNX, Transcoder.INTEGER_TRANSCODER, key, field, o);
     }
 
     @Override
     public Future<Long> hsetNx(String key, String field, long o) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        //noinspection unchecked
+        return sendCommand(Commands.HSETNX, Transcoder.LONG_TRANSCODER, key, field, o);
     }
 
     @Override
     public Future<Long> hsetNx(String key, String field, double o) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        //noinspection unchecked
+        return sendCommand(Commands.HSETNX, Transcoder.DOUBLE_TRANSCODER, key, field, o);
     }
 
     @Override
     public Future<Long> hsetNx(String key, String field, Object o) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        //noinspection unchecked
+        return sendCommand(Commands.HSETNX, Transcoder.SERIALIZING_TRANSCODER, key, field, o);
     }
 
     @Override
@@ -858,6 +864,156 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
         assert keys.length > 0;
         //noinspection unchecked
         return sendCommand(Commands.SUNIONSTORE, Transcoder.LONG_TRANSCODER, destination, key, keys);
+    }
+
+    //sorted sets
+    @Override
+    public Future<Long> zadd(String key, double score, Object member, ZEntity... others) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZADD, Transcoder.SERIALIZING_TRANSCODER, key, score, member, others);
+    }
+
+    @Override
+    public Future<Long> zcard(String key) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZCARD, Transcoder.LONG_TRANSCODER, key);
+    }
+
+    @Override
+    public Future<Long> zcount(String key, String min, String max) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZCOUNT, Transcoder.LONG_TRANSCODER, key, min, max);
+    }
+
+    @Override
+    public Future<Double> zincrBy(String key, double increment, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZINCRBY, Transcoder.SERIALIZING_TRANSCODER, key, increment, member);
+    }
+
+    @Override
+    public Future<Long> zinterStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate) {
+        if (weights != null) assert keys.length == weights.length;
+        if (aggregate == null) aggregate = ZSetAggregate.SUM;
+        //noinspection unchecked
+        return sendCommand(Commands.ZINTERSTORE, Transcoder.LONG_TRANSCODER, destination, keys.length, keys, weights, aggregate.name());
+    }
+
+    @Override
+    public Future<Long> zunionStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate) {
+        if (weights != null) assert keys.length == weights.length;
+        if (aggregate == null) aggregate = ZSetAggregate.SUM;
+        //noinspection unchecked
+        return sendCommand(Commands.ZUNIONSTORE, Transcoder.LONG_TRANSCODER, destination, keys.length, keys, weights, aggregate.name());
+
+    }
+
+    @Override
+    public Future<List<?>> zrange(String key, int start, int stop) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGE, Transcoder.SERIALIZING_TRANSCODER, key, start, stop);
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrangeWithScores(String key, int start, int stop) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGE, Transcoder.SERIALIZING_TRANSCODER, key, start, stop, "WITHSCORES");
+    }
+
+    @Override
+    public Future<List<?>> zrangeByScore(String key, String min, String max) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, min, max, null);
+    }
+
+    @Override
+    public Future<List<?>> zrangeByScore(String key, String min, String max, int offset, int count) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, min, max, null, offset, count);
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, min, max, "WITHSCORES");
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max, int offset, int count) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, min, max, "WITHSCORES", offset, count);
+    }
+
+    @Override
+    public Future<Long> zrank(String key, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZRANK, Transcoder.SERIALIZING_TRANSCODER, key, member);
+    }
+
+    @Override
+    public Future<Long> zrem(String key, Object... members) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREM, Transcoder.SERIALIZING_TRANSCODER, key, members);
+    }
+
+    @Override
+    public Future<Long> zremRangeByRank(String key, int start, int stop) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREMRANGEBYRANK, Transcoder.LONG_TRANSCODER, key, start, stop);
+    }
+
+    @Override
+    public Future<Long> zremRangeByScore(String key, String min, String max) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREMRANGEBYSCORE, Transcoder.LONG_TRANSCODER, key, min, max);
+    }
+
+    @Override
+    public Future<List<?>> zrevRange(String key, int start, int stop) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGE, Transcoder.SERIALIZING_TRANSCODER, key, start, stop);
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrevRangeWithScores(String key, int start, int stop) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGE, Transcoder.SERIALIZING_TRANSCODER, key, start, stop, "WITHSCORES");
+    }
+
+    @Override
+    public Future<List<?>> zrevRangeByScore(String key, String max, String min) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, max, min, null);
+    }
+
+    @Override
+    public Future<List<?>> zrevRangeByScore(String key, String max, String min, int offset, int count) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, max, min, null, offset, count);
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, max, min, "WITHSCORES");
+    }
+
+    @Override
+    public Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min, int offset, int count) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANGEBYSCORE, Transcoder.SERIALIZING_TRANSCODER, key, max, min, "WITHSCORES", offset, count);
+    }
+
+    @Override
+    public Future<Long> zrevRank(String key, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZREVRANK, Transcoder.SERIALIZING_TRANSCODER, key, member);
+    }
+
+    @Override
+    public Future<Double> zscore(String key, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.ZSCORE, Transcoder.SERIALIZING_TRANSCODER, key, member);
     }
 
     final BlockingQueue<Command> commandQueue = new LinkedBlockingQueue<Command>();

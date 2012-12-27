@@ -13,6 +13,7 @@ public class LongTranscoder implements Transcoder<Long>{
 
     @Override
     public Long decode(byte[] v) {
+        if(v == null) return null;
         return Long.parseLong(new String(v));
     }
 }

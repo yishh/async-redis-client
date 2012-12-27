@@ -13,6 +13,7 @@ public class IntegerTranscoder implements Transcoder<Integer> {
 
     @Override
     public Integer decode(byte[] v) {
+        if(v == null) return null;
         return Integer.parseInt(new String(v));
     }
 }

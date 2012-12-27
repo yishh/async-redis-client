@@ -511,4 +511,142 @@ public interface AsyncRedisClient {
      * @return the number of elements in the resulting set.
      */
     Future<Long> sunionStore(String destination, String key, String... keys);
+
+    //sorted sets
+
+    /**
+     * Adds all the specified members with the specified scores to the sorted set stored at key.
+     *
+     * @param key    key
+     * @param score  first member score
+     * @param member first member
+     * @param others more member should be passed as ZEnity
+     * @return The number of elements added to the sorted sets, not including elements already existing for which the score was updated.
+     */
+    Future<Long> zadd(String key, double score, Object member, ZEntity... others);
+
+    /**
+     * Returns the sorted set cardinality (number of elements) of the sorted set stored at key.
+     *
+     * @param key key
+     * @return the cardinality (number of elements) of the sorted set, or 0 if key does not exist.
+     */
+    Future<Long> zcard(String key);
+
+    /**
+     * Returns the number of elements in the sorted set at key with a score between min and max.
+     * The min and max arguments have the same semantic as described for ZRANGEBYSCORE.
+     *
+     * @param key key
+     * @param min min score
+     * @param max max score
+     * @return the number of elements in the specified score range.
+     */
+    Future<Long> zcount(String key, String min, String max);
+
+    /**
+     * Increments the score of member in the sorted set stored at key by increment.
+     *
+     * @param key       key
+     * @param increment score increment score
+     * @param member    set member
+     * @return the new score of member (a double precision floating point number), represented as string.
+     */
+    Future<Double> zincrBy(String key, double increment, Object member);
+
+    /**
+     * Computes the intersection of numkeys sorted sets given by the specified keys,
+     * and stores the result in destination.
+     * It is mandatory to provide the number of input keys (numkeys) before passing the input keys and the other (optional) arguments.
+     *
+     * @param destination destination key
+     * @param keys        keys
+     * @param weights     weights . if not null, size must equals keys size.
+     * @param aggregate   aggregate .if null,default use ZSetAggregate.SUM
+     * @return
+     */
+    Future<Long> zinterStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
+
+    Future<Long> zunionStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
+
+    /**
+     * Returns the specified range of elements in the sorted set stored at key. The elements are considered to be ordered from the lowest to the highest score. Lexicographical order is used for elements with equal score.
+     *
+     * @param key   key
+     * @param start start index
+     * @param stop  stop index
+     * @return list of elements in the specified range (optionally with their scores).
+     */
+    Future<List<?>> zrange(String key, int start, int stop);
+
+    Future<List<ZEntity<?>>> zrangeWithScores(String key, int start, int stop);
+
+    Future<List<?>> zrangeByScore(String key, String min, String max);
+
+    Future<List<?>> zrangeByScore(String key, String min, String max, int offset, int count);
+
+    Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max);
+
+    Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max, int offset, int count);
+
+    /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
+     *
+     * @param key    key
+     * @param member member
+     * @return If member exists in the sorted set, Integer reply: the rank of member.
+     *         If member does not exist in the sorted set or key does not exist, Bulk reply: nil.
+     */
+    Future<Long> zrank(String key, Object member);
+
+    /**
+     * Removes the specified members from the sorted set stored at key. Non existing members are ignored.
+     * An error is returned when key exists and does not hold a sorted set.
+     *
+     * @param key     key
+     * @param members remove members
+     * @return The number of members removed from the sorted set, not including non existing members.
+     */
+    Future<Long> zrem(String key, Object... members);
+
+    /**
+     * Removes all elements in the sorted set stored at key with rank between start and stop. Both start and stop are 0 -based indexes with 0 being the element with the lowest score.
+     *
+     * @param key   key
+     * @param start start
+     * @param stop  stop
+     * @return the number of elements removed.
+     */
+    Future<Long> zremRangeByRank(String key, int start, int stop);
+
+    /**
+     * Removes all elements in the sorted set stored at key with a score between min and max (inclusive).
+     *
+     * @param key key
+     * @param min min score.format by ZNumbers
+     * @param max max score.format by ZNumbers
+     * @return the number of elements removed.
+     */
+    Future<Long> zremRangeByScore(String key, String min, String max);
+
+    Future<List<?>> zrevRange(String key, int start, int stop);
+
+    Future<List<ZEntity<?>>> zrevRangeWithScores(String key, int start, int stop);
+
+    Future<List<?>> zrevRangeByScore(String key, String max, String min);
+    Future<List<?>> zrevRangeByScore(String key, String max, String min, int offset, int count);
+
+    Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min);
+    Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min, int offset, int count);
+
+    Future<Long> zrevRank(String key, Object member);
+    /**
+     * Returns the score of member in the sorted set at key.
+     * If member does not exist in the sorted set, or key does not exist, nil is returned.
+     *
+     * @param key    key
+     * @param member member
+     * @return the score of member (a double precision floating point number), represented as string.
+     */
+    Future<Double> zscore(String key, Object member);
 }

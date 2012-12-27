@@ -13,6 +13,7 @@ public class DoubleTranscoder implements Transcoder<Double> {
 
     @Override
     public Double decode(byte[] v) {
+        if(v == null) return null;
         return Double.parseDouble(new String(v));
     }
 }

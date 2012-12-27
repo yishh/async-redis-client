@@ -13,6 +13,7 @@ public class StringTranscoder implements Transcoder<String>{
 
     @Override
     public String decode(byte[] v) {
+        if(v == null) return null;
         return new String(v);
     }
 }
