@@ -358,4 +358,157 @@ public interface AsyncRedisClient {
      * @return the element being popped and pushed.
      */
     Future<Object> rpoplpush(String source, String destination);
+
+    //sets
+
+    /**
+     * Add the specified members to the set stored at key. Specified members that are already a member of this set are ignored. If key does not exist, a new set is created before adding the specified members.
+     * An error is returned when the value stored at key is not a set.
+     *
+     * @param key    cache key
+     * @param values the value to add
+     * @return the number of elements that were added to the set, not including all the elements already present into the set.
+     */
+    Future<Long> sadd(String key, Object... values);
+
+    /**
+     * Returns the set cardinality (number of elements) of the set stored at key.
+     *
+     * @param key cache key
+     * @return the cardinality (number of elements) of the set, or 0 if key does not exist.
+     */
+    Future<Long> scard(String key);
+
+    /**
+     * Returns the members of the set resulting from the difference between the first set and all the successive sets.
+     * For example:
+     *
+     * @param key   key
+     * @param diffs diff keys
+     * @return list with members of the resulting set.
+     */
+    Future<List<?>> sdiff(String key, String... diffs);
+
+    /**
+     * This command is equal to SDIFF, but instead of returning the resulting set, it is stored in destination.
+     * If destination already exists, it is overwritten.
+     *
+     * @param destination destination key
+     * @param key         key
+     * @param diffs       diff keys
+     * @return the number of elements in the resulting set.
+     */
+    Future<Long> sdiffStore(String destination, String key, String... diffs);
+
+    /**
+     * Returns the members of the set resulting from the intersection of all the given sets.
+     * For example:
+     * key1 = {a,b,c,d}
+     * key2 = {c}
+     * key3 = {a,c,e}
+     * SINTER key1 key2 key3 = {c}
+     *
+     * @param key  key
+     * @param keys inner keys
+     * @return list with members of the resulting set.
+     */
+    Future<List<?>> sinter(String key, String... keys);
+
+    /**
+     * This command is equal to SINTER, but instead of returning the resulting set, it is stored in destination.
+     * If destination already exists, it is overwritten.
+     *
+     * @param destination destination key
+     * @param key         key
+     * @param keys        inner keys
+     * @return the number of elements in the resulting set.
+     */
+    Future<Long> sinterStore(String destination, String key, String... keys);
+
+    /**
+     * Returns if member is a member of the set stored at key.
+     *
+     * @param key    key
+     * @param member member
+     * @return 1 if the element is a member of the set. 0 if the element is not a member of the set, or if key does not exist.
+     */
+    Future<Long> sisMember(String key, Object member);
+
+    /**
+     * Returns all the members of the set value stored at key.
+     * This has the same effect as running SINTER with one argument key.
+     *
+     * @param key key
+     * @return all elements of the set.
+     */
+    Future<List<?>> smembers(String key);
+
+    /**
+     * Move member from the set at source to the set at destination.
+     * This operation is atomic.
+     * In every given moment the element will appear to be a member of source or destination for other clients.
+     *
+     * @param source      source set
+     * @param destination destination set
+     * @param member      moved member
+     * @return 1 if the element is moved.
+     *         0 if the element is not a member of source and no operation was performed.
+     */
+    Future<Long> smove(String source, String destination, Object member);
+
+    /**
+     * Removes and returns a random element from the set value stored at key.
+     * This operation is similar to SRANDMEMBER, that returns a random element from a set but does not remove it.
+     *
+     * @param key key
+     * @return the removed element, or nil when key does not exist.
+     */
+    Future<?> spop(String key);
+
+    Future<?> srandomMember(String key);
+
+    /**
+     * When called with just the key argument, return a random element from the set value stored at key.
+     * Starting from Redis version 2.6, when called with the additional count argument, return an array of count distinct elements if count is positive. If called with a negative count the behavior changes and the command is allowed to return the same element multiple times. In this case the numer of returned elements is the absolute value of the specified count.
+     *
+     * @param key   key
+     * @param count count
+     * @return : when the additional count argument is passed the command returns an array of elements, or an empty array when key does not exist.
+     */
+    Future<List<?>> srandomMember(String key, int count);
+
+    /**
+     * Remove the specified members from the set stored at key. Specified members that are not a member of this set are ignored.
+     * If key does not exist, it is treated as an empty set and this command returns 0.
+     *
+     * @param key     key
+     * @param members members
+     * @return the number of members that were removed from the set, not including non existing members.
+     */
+    Future<Long> srem(String key, Object... members);
+
+    /**
+     * Returns the members of the set resulting from the union of all the given sets.
+     * For example:
+     * key1 = {a,b,c,d}
+     * key2 = {c}
+     * key3 = {a,c,e}
+     * SUNION key1 key2 key3 = {a,b,c,d,e}
+     *
+     * @param key  key
+     * @param keys keys
+     * @return list with members of the resulting set.
+     */
+    Future<List<?>> sunion(String key, String... keys);
+
+    /**
+     * This command is equal to SUNION, but instead of returning the resulting set, it is stored in destination.
+     * If destination already exists, it is overwritten.
+     *
+     * @param destination destination key
+     * @param key         key
+     * @param keys        keys
+     * @return the number of elements in the resulting set.
+     */
+    Future<Long> sunionStore(String destination, String key, String... keys);
 }

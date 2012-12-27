@@ -702,6 +702,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public Future<Long> lpush(String key, Object... values) {
+        assert values.length > 0;
         //noinspection unchecked
         return sendCommand(Commands.LPUSH, Transcoder.SERIALIZING_TRANSCODER, key, values);
     }
@@ -744,6 +745,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public Future<Long> rpush(String key, Object... values) {
+        assert values.length > 0;
         //noinspection unchecked
         return sendCommand(Commands.RPUSH, Transcoder.SERIALIZING_TRANSCODER, key, values);
     }
@@ -758,6 +760,104 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     public Future<Object> rpoplpush(String source, String destination) {
         //noinspection unchecked
         return sendCommand(Commands.RPOPLPUSH, Transcoder.SERIALIZING_TRANSCODER, source, destination);
+    }
+
+    @Override
+    public Future<Long> sadd(String key, Object... values) {
+        assert values.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SADD, Transcoder.SERIALIZING_TRANSCODER, key, values);
+    }
+
+    @Override
+    public Future<Long> scard(String key) {
+        //noinspection unchecked
+        return sendCommand(Commands.SCARD, Transcoder.LONG_TRANSCODER, key);
+    }
+
+    @Override
+    public Future<List<?>> sdiff(String key, String... diffs) {
+        assert diffs.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SDIFF, Transcoder.SERIALIZING_TRANSCODER, key, diffs);
+    }
+
+    @Override
+    public Future<Long> sdiffStore(String destination, String key, String... diffs) {
+        assert diffs.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SDIFFSTORE, Transcoder.LONG_TRANSCODER, destination, key, diffs);
+    }
+
+    @Override
+    public Future<List<?>> sinter(String key, String... keys) {
+        assert keys.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SINTER, Transcoder.SERIALIZING_TRANSCODER, key, keys);
+    }
+
+    @Override
+    public Future<Long> sinterStore(String destination, String key, String... keys) {
+        assert keys.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SINTERSTORE, Transcoder.LONG_TRANSCODER, destination, key, keys);
+    }
+
+    @Override
+    public Future<Long> sisMember(String key, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.SISMEMBER, Transcoder.SERIALIZING_TRANSCODER, key, member);
+    }
+
+    @Override
+    public Future<List<?>> smembers(String key) {
+        //noinspection unchecked
+        return sendCommand(Commands.SMEMBERS, Transcoder.SERIALIZING_TRANSCODER, key);
+    }
+
+    @Override
+    public Future<Long> smove(String source, String destination, Object member) {
+        //noinspection unchecked
+        return sendCommand(Commands.SMOVE, Transcoder.SERIALIZING_TRANSCODER, source, destination, member);
+    }
+
+    @Override
+    public Future<?> spop(String key) {
+        //noinspection unchecked
+        return sendCommand(Commands.SPOP, Transcoder.SERIALIZING_TRANSCODER, key);
+    }
+
+    @Override
+    public Future<?> srandomMember(String key) {
+        //noinspection unchecked
+        return sendCommand(Commands.SRANDMEMBER, Transcoder.SERIALIZING_TRANSCODER, key);
+    }
+
+    @Override
+    public Future<List<?>> srandomMember(String key, int count) {
+        assert count > 1;
+        //noinspection unchecked
+        return sendCommand(Commands.SRANDMEMBER, Transcoder.SERIALIZING_TRANSCODER, key, count);
+    }
+
+    @Override
+    public Future<Long> srem(String key, Object... members) {
+        //noinspection unchecked
+        return sendCommand(Commands.SREM, Transcoder.SERIALIZING_TRANSCODER, key, members);
+    }
+
+    @Override
+    public Future<List<?>> sunion(String key, String... keys) {
+        assert keys.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SUNION, Transcoder.SERIALIZING_TRANSCODER, key, keys);
+    }
+
+    @Override
+    public Future<Long> sunionStore(String destination, String key, String... keys) {
+        assert keys.length > 0;
+        //noinspection unchecked
+        return sendCommand(Commands.SUNIONSTORE, Transcoder.LONG_TRANSCODER, destination, key, keys);
     }
 
     final BlockingQueue<Command> commandQueue = new LinkedBlockingQueue<Command>();

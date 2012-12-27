@@ -228,13 +228,7 @@ public enum Commands {
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             String key = (String) args[0];
             String[] fields = ((String[]) args[1]);
-            String[] keys = new String[fields.length + 1];
-            keys[0] = key;
-            for (int i = 0; i < fields.length; i++) {
-                keys[i + 1] = String.valueOf(fields[i]);
-            }
-            //noinspection RedundantArrayCreation
-            return new StringArgsCommand<T>(transcoder, name(), keys);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{key}, fields));
         }
     }, HEXISTS {
         @Override
@@ -268,12 +262,7 @@ public enum Commands {
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             String key = (String) args[0];
             String[] fields = ((String[]) args[1]);
-            String[] keys = new String[fields.length + 1];
-            keys[0] = key;
-            for (int i = 0; i < fields.length; i++) {
-                keys[i + 1] = String.valueOf(fields[i]);
-            }
-            return new StringArgsCommand<T>(transcoder, name(), (String[]) keys);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{key}, fields));
         }
     }, HMSET {
         @Override
@@ -362,7 +351,110 @@ public enum Commands {
             //noinspection RedundantArrayCreation
             return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], (String) args[1]});
         }
+    },
+    //sets
+    SADD {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], (Object[]) args[1]);
+        }
+    }, SCARD {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, SDIFF {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String key = (String) args[0];
+            String[] fields = ((String[]) args[1]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{key}, fields));
+        }
+    }, SDIFFSTORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String destination = (String) args[0];
+            String key = (String) args[1];
+            String[] fields = ((String[]) args[2]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{destination, key}, fields));
+        }
+    }, SINTER {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String key = (String) args[0];
+            String[] fields = ((String[]) args[1]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{key}, fields));
+        }
+    }, SINTERSTORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String destination = (String) args[0];
+            String key = (String) args[1];
+            String[] fields = ((String[]) args[2]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{destination, key}, fields));
+        }
+    }, SISMEMBER {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], args[1]);
+        }
+    }, SMEMBERS {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, SMOVE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], (String) args[1]}, args[2]);
+        }
+    }, SPOP {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, SRANDMEMBER {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args.length > 1)
+                //noinspection RedundantArrayCreation
+                return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1])});
+            else
+                return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, SREM{
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0], (Object[]) args[1]);
+        }
+    }
+    , SUNION {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String key = (String) args[0];
+            String[] fields = ((String[]) args[1]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{key}, fields));
+        }
+    }, SUNIONSTORE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            String destination = (String) args[0];
+            String key = (String) args[1];
+            String[] fields = ((String[]) args[2]);
+            return new StringArgsCommand<T>(transcoder, name(), combineString(new String[]{destination, key}, fields));
+        }
     };
+
+    private static String[] combineString(String[] keys, Object[] strs) {
+
+        String[] results = new String[strs.length + keys.length];
+        System.arraycopy(keys, 0, results, 0, keys.length);
+        for (int i = 0; i < strs.length; i++) {
+            results[i + keys.length] = String.valueOf(strs[i]);
+        }
+        return results;
+    }
 
     public abstract <T> Command getCommand(Transcoder<T> transcoder, Object... args);
 }

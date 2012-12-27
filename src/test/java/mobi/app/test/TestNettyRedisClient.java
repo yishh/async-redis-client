@@ -714,6 +714,124 @@ public class TestNettyRedisClient extends TestCase {
 
     }
 
+    public void testSaddAndCardAndMembers() throws ExecutionException, InterruptedException {
+        String key = "SET_ADD_KEY";
+        client.delete(key).get();
+        long reply = client.sadd(key, "OK", "KO").get();
+        assertEquals(2, reply);
+        reply = client.scard(key).get();
+        assertEquals(2, reply);
+        List<String> cached = (List<String>) client.smembers(key).get();
+        assertEquals(2, cached.size());
+        assertEquals("OK", cached.get(0));
+        assertEquals("KO", cached.get(1));
+    }
+
+    public void testSdiffAndInterAndUnion() throws ExecutionException, InterruptedException {
+        String key1 = "SET_DIFF_KEY1";
+        String key2 = "SET_DIFF_KEY2";
+        String key3 = "SET_DIFF_KEY3";
+        client.delete(key1, key2, key3).get();
+        long reply = client.sadd(key1, "a", "b", "c", "d").get();
+        assertEquals(4, reply);
+        reply = client.sadd(key2, "c").get();
+        assertEquals(1, reply);
+        reply = client.sadd(key3, "a", "c", "e").get();
+        assertEquals(3, reply);
+        List<String>  diff = (List<String>) client.sdiff(key1, key2, key3).get();
+        assertEquals(2, diff.size());
+        assertEquals("b", diff.get(0));
+        assertEquals("d", diff.get(1));
+        reply =  client.sdiffStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        assertEquals(2, reply);
+        List<String> cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
+        assertEquals(2, cached.size());
+        assertEquals("b", cached.get(0));
+        assertEquals("d", cached.get(1));
+        diff = (List<String>) client.sinter(key1, key2, key3).get();
+        assertEquals(1, diff.size());
+        assertEquals("c", diff.get(0));
+        reply =  client.sinterStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        assertEquals(1, reply);
+        cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
+        assertEquals(1, cached.size());
+        assertEquals("c", cached.get(0));
+        diff = (List<String>) client.sunion(key1, key2, key3).get();
+        assertEquals(5, diff.size());
+        assertTrue(diff.contains("a"));
+        assertTrue(diff.contains("b"));
+        assertTrue(diff.contains("c"));
+        assertTrue(diff.contains("d"));
+        assertTrue(diff.contains("e"));
+
+        reply =  client.sunionStore("SET_DIFF_RESULT", key1, key2, key3).get();
+        assertEquals(5, reply);
+        cached = (List<String>) client.smembers("SET_DIFF_RESULT").get();
+        assertEquals(5, cached.size());
+        assertTrue(cached.contains("a"));
+        assertTrue(cached.contains("b"));
+        assertTrue(cached.contains("c"));
+        assertTrue(cached.contains("d"));
+        assertTrue(cached.contains("e"));
+
+
+    }
+
+    public void testSisMember() throws ExecutionException, InterruptedException {
+        String key = "SET_ADD_KEY2";
+        client.delete(key).get();
+        long reply = client.sadd(key, "OK", "KO").get();
+        assertEquals(2, reply);
+        reply = client.sisMember(key, "OK").get();
+        assertEquals(1, reply);
+        reply = client.sisMember(key, "OKO").get();
+        assertEquals(0, reply);
+    }
+
+    public void testSmove() throws ExecutionException, InterruptedException {
+        String key1 = "SET_MOVE_KEY1";
+        String key2 = "SET_MOVE_KEY2";
+        client.delete(key1, key2).get();
+        long reply = client.sadd(key1, "a", "b", "c", "d").get();
+        assertEquals(4, reply);
+        reply = client.sadd(key2, "e").get();
+        assertEquals(1, reply);
+        reply = client.smove(key1,  key2, "d").get();
+        assertEquals(1, reply);
+        reply = client.scard(key1).get();
+        assertEquals(3, reply);
+        reply = client.scard(key2).get();
+        assertEquals(2, reply);
+        reply = client.smove(key1, key2, "e").get();
+        assertEquals(0, reply);
+    }
+
+    public void testSpopAndRandomAndRem() throws ExecutionException, InterruptedException {
+        String key1 = "SET_POP_KEY1";
+        client.delete(key1).get();
+        long reply = client.sadd(key1, "a", "b", "c", "d").get();
+        assertEquals(4, reply);
+        String pop = (String) client.spop(key1).get();
+        assertNotNull(pop);
+        reply = client.scard(key1).get();
+        assertEquals(3, reply);
+        pop = (String) client.srandomMember(key1).get();
+        assertNotNull(pop);
+        reply = client.scard(key1).get();
+        assertEquals(3, reply);
+        List<String> randoms = (List<String>) client.srandomMember(key1, 2).get();
+        assertEquals(2, randoms.size());
+        reply = client.sadd(key1, "a", "b", "c", "d").get();
+        assertEquals(1, reply);
+        reply = client.srem(key1, "a", "b").get();
+        assertEquals(2, reply);
+        reply = client.sisMember(key1, "a").get();
+        assertEquals(0, reply);
+        reply = client.sisMember(key1, "c").get();
+        assertEquals(1, reply);
+
+
+    }
 //    public void testQuit() throws ExecutionException, InterruptedException {
 //        String result = client.quit().get();
 //        assertEquals("OK", result);
