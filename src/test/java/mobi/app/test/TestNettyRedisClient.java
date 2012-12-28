@@ -1,9 +1,14 @@
 package mobi.app.test;
 
 import junit.framework.TestCase;
+import mobi.app.redis.Sha1;
 import mobi.app.redis.ZEntity;
 import mobi.app.redis.ZNumbers;
 import mobi.app.redis.netty.NettyRedisClient;
+import mobi.app.redis.netty.reply.MultiBulkReply;
+import mobi.app.redis.netty.reply.Reply;
+import mobi.app.redis.netty.reply.SingleReply;
+import mobi.app.redis.transcoders.Transcoder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -1047,6 +1052,45 @@ public class TestNettyRedisClient extends TestCase {
 
 
     }
+
+    public void testEval() throws ExecutionException, InterruptedException {
+        String script = "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}";
+        byte[] arg1 = Transcoder.STRING_TRANSCODER.encode("first");
+        byte[] arg2 = Transcoder.STRING_TRANSCODER.encode("second");
+        Reply reply = client.eval(script, new String[]{"key1", "key2"}, arg1, arg2).get();
+        assertEquals(MultiBulkReply.class, reply.getClass());
+        MultiBulkReply multiBulkReply = (MultiBulkReply) reply;
+        List<byte[]> replys = (List<byte[]>) multiBulkReply.get();
+        assertEquals(4, replys.size());
+        assertEquals("key1", Transcoder.STRING_TRANSCODER.decode(replys.get(0)));
+        assertEquals("key2", Transcoder.STRING_TRANSCODER.decode(replys.get(1)));
+        assertEquals("first", Transcoder.STRING_TRANSCODER.decode(replys.get(2)));
+        assertEquals("second", Transcoder.STRING_TRANSCODER.decode(replys.get(3)));
+        script = "return redis.call('set','foo','bar')";
+        reply = client.eval(script, new String[]{}).get();
+        assertEquals(SingleReply.class, reply.getClass());
+        SingleReply singleReply = (SingleReply) reply;
+        assertEquals("OK", singleReply.decode(null));
+        String sha1 = client.scriptLoad(script).get();
+        String sha = Sha1.sha1(script);
+        assertEquals(sha, sha1);
+        long exists = client.scriptExists(sha1).get();
+        assertEquals(1, exists);
+
+//        script = "return {'1','2',{'3','Hello World!'}}";
+//        reply = client.eval(script, new String[]{}).get();
+//        assertEquals(MultiBulkReply.class, reply.getClass());
+//        multiBulkReply = (MultiBulkReply) reply;
+//        replys = (List<byte[]>) multiBulkReply.get();
+//        assertEquals(4, replys.size());
+    }
+
+    public void testServer() throws ExecutionException, InterruptedException {
+       System.out.println( client.info().get());
+        System.out.println( client.dbSize().get());
+        System.out.println( client.clientList().get());
+    }
+
 //    public void testQuit() throws ExecutionException, InterruptedException {
 //        String result = client.quit().get();
 //        assertEquals("OK", result);

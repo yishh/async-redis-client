@@ -561,29 +561,29 @@ public enum Commands {
                 return new StringArgsCommand<T>(transcoder, name(), arguments);
             }
         }
-    },ZRANK{
+    }, ZRANK {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new StringArgsCommand<T>(transcoder, name(), (String) args[0], args[1]);
         }
-    },ZREM {
+    }, ZREM {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new StringArgsCommand<T>(transcoder, name(), (String) args[0], (Object[]) args[1]);
         }
-    },ZREMRANGEBYRANK{
+    }, ZREMRANGEBYRANK {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             //noinspection RedundantArrayCreation
-            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]),  String.valueOf(args[2])});
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]), String.valueOf(args[2])});
         }
-    }, ZREMRANGEBYSCORE{
+    }, ZREMRANGEBYSCORE {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             //noinspection RedundantArrayCreation
             return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], (String) args[1], (String) args[2]});
         }
-    } , ZREVRANGE{
+    }, ZREVRANGE {
         @SuppressWarnings("RedundantArrayCreation")
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
@@ -591,7 +591,7 @@ public enum Commands {
                 return new ZWithScoreCommand<T>(transcoder, name(), (String) args[0], new String[]{String.valueOf(args[1]), String.valueOf(args[2]), (String) args[3]});
             return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1]), String.valueOf(args[2])});
         }
-    }, ZREVRANGEBYSCORE{
+    }, ZREVRANGEBYSCORE {
         @SuppressWarnings("RedundantArrayCreation")
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
@@ -622,16 +622,138 @@ public enum Commands {
                 return new StringArgsCommand<T>(transcoder, name(), arguments);
             }
         }
-    }, ZREVRANK{
+    }, ZREVRANK {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new StringArgsCommand<T>(transcoder, name(), (String) args[0], args[1]);
         }
-    }
-    , ZSCORE {
+    }, ZSCORE {
         @Override
         public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
             return new ZScoreCommand<T>(transcoder, name(), (String) args[0], args[1]);
+        }
+    },
+    //scripts
+    EVAL {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args[2] != null)
+                return new EvalCommand(transcoder, name(), (byte[]) args[0], (String[]) args[1], (byte[][]) args[2]);
+            return new EvalCommand(transcoder, name(), (byte[]) args[0], (String[]) args[1]);
+        }
+    }, EVALSHA {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args[2] != null)
+                return new EvalCommand(transcoder, name(), (byte[]) args[0], (String[]) args[1], (byte[][]) args[2]);
+            return new EvalCommand(transcoder, name(), (byte[]) args[0], (String[]) args[1]);
+        }
+    }, SCRIPT_LOAD {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, "SCRIPT", new String[]{"LOAD", (String) args[0]});
+        }
+    }, SCRIPT_EXISTS {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            if (args[0] instanceof String[])
+                //noinspection RedundantArrayCreation
+                return new StringArgsCommand<T>(transcoder, "SCRIPT", combineString(new String[]{"EXISTS"}, (String[]) args[0]));
+            else
+                //noinspection RedundantArrayCreation
+                return new StringArgsCommand<T>(transcoder, "SCRIPT", new String[]{"EXISTS", (String) args[0]});
+        }
+    }, SCRIPT_FLUSH {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, "SCRIPT", "FLUSH");
+        }
+    }, SCRIPT_KILL {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, "SCRIPT", "KILL");
+        }
+    },
+    //servers
+    BGREWRITEAOF {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, BGSAVE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, CLIENT_KILL {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, "CLIENT", new String[]{"KILL", String.format("%s:%s", args[0], args[1])});
+        }
+    }, CLIENT_LIST {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, "CLIENT", "LIST");
+        }
+    }, CONFIG_GET {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, "CONFIG", new String[]{"GET", (String) args[0]});
+        }
+    }, CONFIG_RESETSTAT {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, "CONFIG", "RESETSTAT");
+        }
+    }, CONFIG_SET {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, "CONFIG", new String[]{"SET", (String) args[0], (String) args[1]});
+        }
+    }, DBSIZE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, FLUSHALL {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, FLUSHDB {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, INFO {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, LASTSAVE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, SAVE {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name());
+        }
+    }, SHUTDOWN {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            return new StringArgsCommand<T>(transcoder, name(), (String) args[0]);
+        }
+    }, SLAVEOF {
+        @Override
+        public <T> Command getCommand(Transcoder<T> transcoder, Object... args) {
+            //noinspection RedundantArrayCreation
+            return new StringArgsCommand<T>(transcoder, name(), new String[]{(String) args[0], String.valueOf(args[1])});
         }
     };
 

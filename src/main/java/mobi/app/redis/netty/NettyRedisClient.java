@@ -1,10 +1,12 @@
 package mobi.app.redis.netty;
 
 import mobi.app.redis.AsyncRedisClient;
+import mobi.app.redis.Sha1;
 import mobi.app.redis.ZEntity;
 import mobi.app.redis.ZSetAggregate;
 import mobi.app.redis.netty.command.Command;
 import mobi.app.redis.netty.command.Commands;
+import mobi.app.redis.netty.reply.ErrorReply;
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.Transcoder;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -1014,6 +1016,162 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     public Future<Double> zscore(String key, Object member) {
         //noinspection unchecked
         return sendCommand(Commands.ZSCORE, Transcoder.SERIALIZING_TRANSCODER, key, member);
+    }
+
+    @Override
+    public Future<Reply> eval(String script, String[] keys, byte[]... args) {
+
+        Future<Reply> shaReply = evalSha(Sha1.sha1(script), keys, args);
+        try {
+            Reply reply = shaReply.get(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+            if (reply instanceof ErrorReply) {
+                //noinspection unchecked
+                return sendCommand(Commands.EVAL, Transcoder.SERIALIZING_TRANSCODER, script.getBytes(), keys, args);
+            }
+            return shaReply;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        //noinspection unchecked
+        return sendCommand(Commands.EVAL, Transcoder.SERIALIZING_TRANSCODER, script.getBytes(), keys, args);
+    }
+
+    @Override
+    public Future<Reply> evalSha(String sha1, String[] keys, byte[]... args) {
+        //noinspection unchecked
+        return sendCommand(Commands.EVALSHA, Transcoder.SERIALIZING_TRANSCODER, sha1.getBytes(), keys, args);
+    }
+
+    @Override
+    public Future<String> scriptLoad(String script) {
+        //noinspection unchecked
+        return sendCommand(Commands.SCRIPT_LOAD, Transcoder.STRING_TRANSCODER, script);
+    }
+
+    @Override
+    public Future<Long> scriptExists(String script) {
+        //noinspection unchecked
+        return sendCommand(Commands.SCRIPT_EXISTS, Transcoder.INTEGER_TRANSCODER, script);
+    }
+
+    @Override
+    public Future<List<Integer>> scriptExists(String[] scripts) {
+
+        assert scripts.length > 1;
+        //noinspection unchecked
+        return sendCommand(Commands.SCRIPT_EXISTS, Transcoder.INTEGER_TRANSCODER, scripts);
+    }
+
+    @Override
+    public Future<String> scriptFlush() {
+        //noinspection unchecked
+        return sendCommand(Commands.SCRIPT_FLUSH, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> scriptKill() {
+        //noinspection unchecked
+        return sendCommand(Commands.SCRIPT_KILL, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> bgRewriteAOF() {
+        //noinspection unchecked
+        return sendCommand(Commands.BGREWRITEAOF, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> bgSave() {
+        //noinspection unchecked
+        return sendCommand(Commands.BGSAVE, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> clientKill(String ip, int port) {
+        //noinspection unchecked
+        return sendCommand(Commands.CLIENT_KILL, Transcoder.STRING_TRANSCODER, ip, port);
+    }
+
+    @Override
+    public Future<String> clientList() {
+        //noinspection unchecked
+        return sendCommand(Commands.CLIENT_LIST, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> configGet(String parameter) {
+        //noinspection unchecked
+        return sendCommand(Commands.CONFIG_GET, Transcoder.STRING_TRANSCODER, parameter);
+    }
+
+    @Override
+    public Future<String> configResetStat() {
+        //noinspection unchecked
+        return sendCommand(Commands.CONFIG_RESETSTAT, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> configSet(String config, String parameter) {
+        //noinspection unchecked
+        return sendCommand(Commands.CONFIG_SET, Transcoder.STRING_TRANSCODER, config, parameter);
+    }
+
+    @Override
+    public Future<Long> dbSize() {
+        //noinspection unchecked
+        return sendCommand(Commands.DBSIZE, Transcoder.LONG_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> flushAll() {
+        //noinspection unchecked
+        return sendCommand(Commands.FLUSHALL, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> flushDB() {
+        //noinspection unchecked
+        return sendCommand(Commands.FLUSHDB, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> info() {
+        //noinspection unchecked
+        return sendCommand(Commands.INFO, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<Long> lastSave() {
+        //noinspection unchecked
+        return sendCommand(Commands.LASTSAVE, Transcoder.LONG_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> save() {
+        //noinspection unchecked
+        return sendCommand(Commands.INFO, Transcoder.STRING_TRANSCODER);
+    }
+
+    @Override
+    public Future<String> shutdown(boolean save) {
+        if (save)
+            //noinspection unchecked
+            return sendCommand(Commands.SHUTDOWN, Transcoder.STRING_TRANSCODER, "SAVE");
+        else
+            //noinspection unchecked
+            return sendCommand(Commands.SHUTDOWN, Transcoder.STRING_TRANSCODER, "NOSAVE");
+    }
+
+    @Override
+    public Future<String> slaveOf(String host, int port) {
+        //noinspection unchecked
+        return sendCommand(Commands.SLAVEOF, Transcoder.STRING_TRANSCODER, host, port);
     }
 
     final BlockingQueue<Command> commandQueue = new LinkedBlockingQueue<Command>();

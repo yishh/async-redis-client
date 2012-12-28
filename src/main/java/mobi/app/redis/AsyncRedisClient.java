@@ -1,5 +1,7 @@
 package mobi.app.redis;
 
+import mobi.app.redis.netty.reply.Reply;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -649,4 +651,33 @@ public interface AsyncRedisClient {
      * @return the score of member (a double precision floating point number), represented as string.
      */
     Future<Double> zscore(String key, Object member);
+
+    Future<Reply> eval(String script, String[] keys, byte[]... args);
+
+    Future<Reply> evalSha(String sha1, String[] keys, byte[]... args);
+
+    Future<String> scriptLoad(String script);
+    Future<Long> scriptExists(String script);
+    Future<List<Integer>> scriptExists(String[]  scripts);
+    Future<String> scriptFlush();
+    Future<String> scriptKill();
+
+    //servers
+    Future<String>  bgRewriteAOF();
+    Future<String> bgSave();
+    Future<String> clientKill(String ip, int port);
+    Future<String> clientList();
+    Future<String> configGet(String parameter);
+    Future<String> configResetStat();
+    Future<String> configSet(String config, String parameter);
+    Future<Long> dbSize();
+    Future<String> flushAll();
+    Future<String> flushDB();
+    Future<String> info();
+    Future<Long> lastSave();
+    Future<String> save();
+    Future<String> shutdown(boolean save);
+    Future<String> slaveOf(String host, int port);
+
+
 }
