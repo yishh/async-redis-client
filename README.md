@@ -17,6 +17,7 @@ async-redis-client
 
 * 目前没有实现所有的redis命令。将实现并覆盖大部分常用的redis命令，包括strings，hashes， lists，sets， sort sets...。但是其中部分命令可能不会被实现。
 * 由于默认采用了java 序列化方案，因此async-redis-client操作的数据可能无法和其他语言实现的redis客户端协同工作
+* scritps的使用是受限的。由于redis的协议限制，很难判断eval script后返回的响应边界，所以目前使用eval命令时需要确保执行的script只返回一个reply，不能是多个reply。
 
 ## 其他
 

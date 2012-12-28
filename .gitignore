@@ -1,2 +1,12 @@
 
 *.class
+
+*.log
+
+target/async-redis-client-0.1-SNAPSHOT.jar
+
+target/maven-archiver/pom.properties
+
+target/surefire-reports/TEST-mobi.app.test.TestNettyRedisClient.xml
+
+target/surefire-reports/mobi.app.test.TestNettyRedisClient.txt
