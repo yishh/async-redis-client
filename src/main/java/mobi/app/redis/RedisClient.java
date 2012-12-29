@@ -4,43 +4,46 @@ import mobi.app.redis.netty.reply.Reply;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * User: thor
- * Date: 12-12-21
- * Time: 上午10:31
+ * Date: 12-12-28
+ * Time: 下午3:41
  */
-public interface AsyncRedisClient {
+public interface RedisClient {
+
+    void close();
     //connect commands
-    Future<String> auth(String password);
+    String auth(String password) ;
 
-    Future<String> echo(String message);
+    String echo(String message);
 
-    Future<String> ping();
+    String ping();
 
-    Future<String> select(int db);
+    String select(int db);
 
-    Future<String> quit();
+    String quit();
 
     //keys commands
-    Future<Long> delete(String key);
+    Long delete(String key);
 
-    Future<Long> delete(String... key);
+    Long delete(String... key);
 
-    Future<byte[]> dump(String key);
+    byte[] dump(String key);
 
-    Future<Long> exists(String key);
+    Long exists(String key);
 
-    Future<Long> expire(String key, int seconds);
+    Long expire(String key, int seconds);
 
-    Future<Long> expireAt(String key, int timestamp);
+    Long expireAt(String key, int timestamp);
 
-    Future<Long> ttl(String key);
+    Long ttl(String key);
 
-    Future<List<String>> keys(String pattern);
+    List<String> keys(String pattern);
 
-    Future<String> migrate(String host, int port, String key, int db, int timeOut);
+    String migrate(String host, int port, String key, int db, int timeOut);
 
     /**
      * Move a key to another database
@@ -49,7 +52,7 @@ public interface AsyncRedisClient {
      * @param db  dest db index
      * @return success = 1, fail = 0
      */
-    Future<Long> move(String key, int db);
+    Long move(String key, int db);
 
     /**
      * Remove the existing timeout on key,
@@ -59,17 +62,17 @@ public interface AsyncRedisClient {
      * @param key cached key
      * @return success = 1, fail = 0
      */
-    Future<Long> presist(String key);
+    Long presist(String key);
 
-    Future<Long> pexpire(String key, long milliseconds);
+    Long pexpire(String key, long milliseconds);
 
-    Future<Long> pexpireAt(String key, long timestamp);
+    Long pexpireAt(String key, long timestamp);
 
-    Future<Long> pttl(String key);
+    Long pttl(String key);
 
-    Future<String> randomKey();
+    String randomKey();
 
-    Future<String> rename(String key, String newKey);
+    String rename(String key, String newKey);
 
     /**
      * Renames key to newkey if newkey does not yet exist. It returns an error under the same conditions as RENAME.
@@ -78,20 +81,20 @@ public interface AsyncRedisClient {
      * @param newKey new  cached key
      * @return 1 if key was renamed to newkey. 0 if newkey already exists.
      */
-    Future<Long> renameNx(String key, String newKey);
+    Long renameNx(String key, String newKey);
 
-    Future<String> restore(String key, int expire, byte[] v);
+    String restore(String key, int expire, byte[] v);
 
-    Future<String> type(String key);
+    String type(String key);
 
     //strings commands
-    Future<String> set(String key, int o);
+    String set(String key, int o);
 
-    Future<String> set(String key, long o);
+    String set(String key, long o);
 
-    Future<String> set(String key, double o);
+    String set(String key, double o);
 
-    Future<String> set(String key, Object o);
+    String set(String key, Object o);
 
     /**
      * Set key to hold string value if key does not exist. In that case, it is equal to SET.
@@ -101,21 +104,21 @@ public interface AsyncRedisClient {
      * @param o   value to set
      * @return 1 if the key was set ,0 if the key was not set
      */
-    Future<Long> setNx(String key, int o);
+    Long setNx(String key, int o);
 
-    Future<Long> setNx(String key, long o);
+    Long setNx(String key, long o);
 
-    Future<Long> setNx(String key, double o);
+    Long setNx(String key, double o);
 
-    Future<Long> setNx(String key, Object o);
+    Long setNx(String key, Object o);
 
-    Future<Long> msetIntNx(Map<String, Integer> value);
+    Long msetIntNx(Map<String, Integer> value);
 
-    Future<Long> msetLongNx(Map<String, Long> value);
+    Long msetLongNx(Map<String, Long> value);
 
-    Future<Long> msetDoubleNx(Map<String, Double> value);
+    Long msetDoubleNx(Map<String, Double> value);
 
-    Future<Long> msetObjectNx(Map<String, ?> value);
+    Long msetObjectNx(Map<String, ?> value);
 
     /**
      * Set key to hold the string value and set key to timeout after a given number of seconds.
@@ -130,39 +133,39 @@ public interface AsyncRedisClient {
      * @param seconds timeout seconds
      * @return status code
      */
-    Future<String> setEx(String key, int o, int seconds);
+    String setEx(String key, int o, int seconds);
 
-    Future<String> setEx(String key, long o, int seconds);
+    String setEx(String key, long o, int seconds);
 
-    Future<String> setEx(String key, double o, int seconds);
+    String setEx(String key, double o, int seconds);
 
-    Future<String> setEx(String key, Object o, int seconds);
+    String setEx(String key, Object o, int seconds);
 
-    Future<String> msetInt(Map<String, Integer> value);
+    String msetInt(Map<String, Integer> value);
 
-    Future<String> msetLong(Map<String, Long> value);
+    String msetLong(Map<String, Long> value);
 
-    Future<String> msetDouble(Map<String, Double> value);
+    String msetDouble(Map<String, Double> value);
 
-    Future<String> msetObject(Map<String, ?> value);
-
-
-    Future<Object> get(String key);
-
-    Future<Integer> getInt(String key);
-
-    Future<Long> getLong(String key);
-
-    Future<Double> getDouble(String key);
+    String msetObject(Map<String, ?> value);
 
 
-    Future<List<?>> mget(String[] key);
+    Object get(String key);
 
-    Future<List<Integer>> mgetInt(String[] key);
+    Integer getInt(String key);
 
-    Future<List<Long>> mgetLong(String[] key);
+    Long getLong(String key);
 
-    Future<List<Double>> mgetDouble(String[] key);
+    Double getDouble(String key);
+
+
+    List<?> mget(String[] key);
+
+    List<Integer> mgetInt(String[] key);
+
+    List<Long> mgetLong(String[] key);
+
+    List<Double> mgetDouble(String[] key);
 
     /**
      * Decrements the number stored at key by one.
@@ -173,9 +176,9 @@ public interface AsyncRedisClient {
      * @param key cached key
      * @return the value of key after the decrement
      */
-    Future<Long> decr(String key);
+    Long decr(String key);
 
-    Future<Long> decrBy(String key, int decrement);
+    Long decrBy(String key, int decrement);
 
     /**
      * Increments the number stored at key by one.
@@ -189,9 +192,9 @@ public interface AsyncRedisClient {
      * @return the value of key after the increment
      */
 
-    Future<Long> incr(String key);
+    Long incr(String key);
 
-    Future<Long> incrBy(String key, int decrement);
+    Long incrBy(String key, int decrement);
 
     /**
      * Atomically sets key to value and returns the old value stored at key. Returns an error when key exists but does not hold a string value.
@@ -200,13 +203,13 @@ public interface AsyncRedisClient {
      * @param v   the value to set
      * @return the old value stored at key, or nil when key did not exist.
      */
-    Future<Integer> getAndSet(String key, int v);
+    Integer getAndSet(String key, int v);
 
-    Future<Long> getAndSet(String key, long v);
+    Long getAndSet(String key, long v);
 
-    Future<Double> getAndSet(String key, double v);
+    Double getAndSet(String key, double v);
 
-    Future<Object> getAndSet(String key, Object v);
+    Object getAndSet(String key, Object v);
 
     //hashes
 
@@ -218,14 +221,14 @@ public interface AsyncRedisClient {
      * @param fields cached field
      * @return the number of fields that were removed from the hash, not including specified but non existing fields.
      */
-    Future<Long> hdel(String key, String... fields);
+    Long hdel(String key, String... fields);
 
     /**
      * @param key   cached key
      * @param field cached field
      * @return 1 if the hash contains field.  0 if the hash does not contain field, or key does not exist.
      */
-    Future<Long> hexists(String key, String field);
+    Long hexists(String key, String field);
 
     /**
      * Sets field in the hash stored at key to value.
@@ -237,90 +240,90 @@ public interface AsyncRedisClient {
      * @param o     set value
      * @return 1 if field is a new field in the hash and value was set. 0 if field already exists in the hash and the value was updated.
      */
-    Future<Long> hset(String key, String field, int o);
+    Long hset(String key, String field, int o);
 
-    Future<Long> hset(String key, String field, long o);
+    Long hset(String key, String field, long o);
 
-    Future<Long> hset(String key, String field, double o);
+    Long hset(String key, String field, double o);
 
-    Future<Long> hset(String key, String field, Object o);
+    Long hset(String key, String field, Object o);
 
-    Future<Long> hsetNx(String key, String field, int o);
+    Long hsetNx(String key, String field, int o);
 
-    Future<Long> hsetNx(String key, String field, long o);
+    Long hsetNx(String key, String field, long o);
 
-    Future<Long> hsetNx(String key, String field, double o);
+    Long hsetNx(String key, String field, double o);
 
-    Future<Long> hsetNx(String key, String field, Object o);
+    Long hsetNx(String key, String field, Object o);
 
-    Future<Object> hget(String key, String field);
+    Object hget(String key, String field);
 
-    Future<Integer> hgetInt(String key, String field);
+    Integer hgetInt(String key, String field);
 
-    Future<Long> hgetLong(String key, String field);
+    Long hgetLong(String key, String field);
 
-    Future<Double> hgetDouble(String key, String field);
+    Double hgetDouble(String key, String field);
 
-    Future<Map<String, Integer>> hgetAllInt(String key);
+    Map<String, Integer> hgetAllInt(String key);
 
-    Future<Map<String, Long>> hgetAllLong(String key);
+    Map<String, Long> hgetAllLong(String key);
 
-    Future<Map<String, Double>> hgetAllDouble(String key);
+    Map<String, Double> hgetAllDouble(String key);
 
-    Future<Map<String, ?>> hgetAll(String key);
+    Map<String, ?> hgetAll(String key);
 
-    Future<Long> hincrBy(String key, String field, int decrement);
+    Long hincrBy(String key, String field, int decrement);
 
-    Future<List<String>> hkeys(String key);
+    List<String> hkeys(String key);
 
-    Future<Long> hlen(String key);
+    Long hlen(String key);
 
 
-    Future<List<?>> hmget(String key, String[] fields);
+    List<?> hmget(String key, String[] fields);
 
-    Future<List<Integer>> hmgetInt(String key, String[] fields);
+    List<Integer> hmgetInt(String key, String[] fields);
 
-    Future<List<Long>> hmgetLong(String key, String[] fields);
+    List<Long> hmgetLong(String key, String[] fields);
 
-    Future<List<Double>> hmgetDouble(String key, String[] fields);
+    List<Double> hmgetDouble(String key, String[] fields);
 
-    Future<String> hmsetInt(String key, Map<String, Integer> value);
+    String hmsetInt(String key, Map<String, Integer> value);
 
-    Future<String> hmsetLong(String key, Map<String, Long> value);
+    String hmsetLong(String key, Map<String, Long> value);
 
-    Future<String> hmsetDouble(String key, Map<String, Double> value);
+    String hmsetDouble(String key, Map<String, Double> value);
 
-    Future<String> hmset(String key, Map<String, ?> value);
+    String hmset(String key, Map<String, ?> value);
 
-    Future<List<Integer>> hvalsInt(String key);
+    List<Integer> hvalsInt(String key);
 
-    Future<List<Long>> hvalsLong(String key);
+    List<Long> hvalsLong(String key);
 
-    Future<List<Double>> hvalsDouble(String key);
+    List<Double> hvalsDouble(String key);
 
-    Future<List<?>> hvals(String key);
+    List<?> hvals(String key);
 
     //lists
-    Future<Object> lindex(String key, int index);
+    Object lindex(String key, int index);
 
-    Future<Long> linsertBefore(String key, Object before, Object value);
+    Long linsertBefore(String key, Object before, Object value);
 
-    Future<Long> linsertAfter(String key, Object after, Object value);
+    Long linsertAfter(String key, Object after, Object value);
 
-    Future<Long> llen(String key);
+    Long llen(String key);
 
-    Future<Object> lpop(String key);
+    Object lpop(String key);
 
     /**
      * @param key    cache key
      * @param values push list value
      * @return the length of the list after the push operations.
      */
-    Future<Long> lpush(String key, Object... values);
+    Long lpush(String key, Object... values);
 
-    Future<Long> lpushx(String key, Object value);
+    Long lpushx(String key, Object value);
 
-    Future<List<?>> lrange(String key, int start, int stop);
+    List<?> lrange(String key, int start, int stop);
 
     /**
      * Removes the first count occurrences of elements equal to value from the list stored at key
@@ -332,22 +335,22 @@ public interface AsyncRedisClient {
      * @param value removed value
      * @return the number of removed elements.
      */
-    Future<Long> lrem(String key, int count, Object value);
+    Long lrem(String key, int count, Object value);
 
-    Future<String> lset(String key, int index, Object value);
+    String lset(String key, int index, Object value);
 
-    Future<String> ltrim(String key, int start, int stop);
+    String ltrim(String key, int start, int stop);
 
-    Future<Object> rpop(String key);
+    Object rpop(String key);
 
     /**
      * @param key    cache key
      * @param values push list value
      * @return the length of the list after the push operations.
      */
-    Future<Long> rpush(String key, Object... values);
+    Long rpush(String key, Object... values);
 
-    Future<Long> rpushx(String key, Object value);
+    Long rpushx(String key, Object value);
 
     /**
      * Atomically returns and removes the last element (tail) of the list stored at source, and pushes the element at the first element (head) of the list stored at destination.
@@ -359,7 +362,7 @@ public interface AsyncRedisClient {
      * @param destination destination list key
      * @return the element being popped and pushed.
      */
-    Future<Object> rpoplpush(String source, String destination);
+    Object rpoplpush(String source, String destination);
 
     //sets
 
@@ -371,7 +374,7 @@ public interface AsyncRedisClient {
      * @param values the value to add
      * @return the number of elements that were added to the set, not including all the elements already present into the set.
      */
-    Future<Long> sadd(String key, Object... values);
+    Long sadd(String key, Object... values);
 
     /**
      * Returns the set cardinality (number of elements) of the set stored at key.
@@ -379,7 +382,7 @@ public interface AsyncRedisClient {
      * @param key cache key
      * @return the cardinality (number of elements) of the set, or 0 if key does not exist.
      */
-    Future<Long> scard(String key);
+    Long scard(String key);
 
     /**
      * Returns the members of the set resulting from the difference between the first set and all the successive sets.
@@ -389,7 +392,7 @@ public interface AsyncRedisClient {
      * @param diffs diff keys
      * @return list with members of the resulting set.
      */
-    Future<List<?>> sdiff(String key, String... diffs);
+    List<?> sdiff(String key, String... diffs);
 
     /**
      * This command is equal to SDIFF, but instead of returning the resulting set, it is stored in destination.
@@ -400,7 +403,7 @@ public interface AsyncRedisClient {
      * @param diffs       diff keys
      * @return the number of elements in the resulting set.
      */
-    Future<Long> sdiffStore(String destination, String key, String... diffs);
+    Long sdiffStore(String destination, String key, String... diffs);
 
     /**
      * Returns the members of the set resulting from the intersection of all the given sets.
@@ -414,7 +417,7 @@ public interface AsyncRedisClient {
      * @param keys inner keys
      * @return list with members of the resulting set.
      */
-    Future<List<?>> sinter(String key, String... keys);
+    List<?> sinter(String key, String... keys);
 
     /**
      * This command is equal to SINTER, but instead of returning the resulting set, it is stored in destination.
@@ -425,7 +428,7 @@ public interface AsyncRedisClient {
      * @param keys        inner keys
      * @return the number of elements in the resulting set.
      */
-    Future<Long> sinterStore(String destination, String key, String... keys);
+    Long sinterStore(String destination, String key, String... keys);
 
     /**
      * Returns if member is a member of the set stored at key.
@@ -434,7 +437,7 @@ public interface AsyncRedisClient {
      * @param member member
      * @return 1 if the element is a member of the set. 0 if the element is not a member of the set, or if key does not exist.
      */
-    Future<Long> sisMember(String key, Object member);
+    Long sisMember(String key, Object member);
 
     /**
      * Returns all the members of the set value stored at key.
@@ -443,7 +446,7 @@ public interface AsyncRedisClient {
      * @param key key
      * @return all elements of the set.
      */
-    Future<List<?>> smembers(String key);
+    List<?> smembers(String key);
 
     /**
      * Move member from the set at source to the set at destination.
@@ -456,7 +459,7 @@ public interface AsyncRedisClient {
      * @return 1 if the element is moved.
      *         0 if the element is not a member of source and no operation was performed.
      */
-    Future<Long> smove(String source, String destination, Object member);
+    Long smove(String source, String destination, Object member);
 
     /**
      * Removes and returns a random element from the set value stored at key.
@@ -465,9 +468,9 @@ public interface AsyncRedisClient {
      * @param key key
      * @return the removed element, or nil when key does not exist.
      */
-    Future<?> spop(String key);
+    Object spop(String key);
 
-    Future<?> srandomMember(String key);
+    Object srandomMember(String key);
 
     /**
      * When called with just the key argument, return a random element from the set value stored at key.
@@ -477,7 +480,7 @@ public interface AsyncRedisClient {
      * @param count count
      * @return : when the additional count argument is passed the command returns an array of elements, or an empty array when key does not exist.
      */
-    Future<List<?>> srandomMember(String key, int count);
+    List<?> srandomMember(String key, int count);
 
     /**
      * Remove the specified members from the set stored at key. Specified members that are not a member of this set are ignored.
@@ -487,7 +490,7 @@ public interface AsyncRedisClient {
      * @param members members
      * @return the number of members that were removed from the set, not including non existing members.
      */
-    Future<Long> srem(String key, Object... members);
+    Long srem(String key, Object... members);
 
     /**
      * Returns the members of the set resulting from the union of all the given sets.
@@ -501,7 +504,7 @@ public interface AsyncRedisClient {
      * @param keys keys
      * @return list with members of the resulting set.
      */
-    Future<List<?>> sunion(String key, String... keys);
+    List<?> sunion(String key, String... keys);
 
     /**
      * This command is equal to SUNION, but instead of returning the resulting set, it is stored in destination.
@@ -512,7 +515,7 @@ public interface AsyncRedisClient {
      * @param keys        keys
      * @return the number of elements in the resulting set.
      */
-    Future<Long> sunionStore(String destination, String key, String... keys);
+    Long sunionStore(String destination, String key, String... keys);
 
     //sorted sets
 
@@ -525,7 +528,7 @@ public interface AsyncRedisClient {
      * @param others more member should be passed as ZEnity
      * @return The number of elements added to the sorted sets, not including elements already existing for which the score was updated.
      */
-    Future<Long> zadd(String key, double score, Object member, ZEntity... others);
+    Long zadd(String key, double score, Object member, ZEntity... others);
 
     /**
      * Returns the sorted set cardinality (number of elements) of the sorted set stored at key.
@@ -533,7 +536,7 @@ public interface AsyncRedisClient {
      * @param key key
      * @return the cardinality (number of elements) of the sorted set, or 0 if key does not exist.
      */
-    Future<Long> zcard(String key);
+    Long zcard(String key);
 
     /**
      * Returns the number of elements in the sorted set at key with a score between min and max.
@@ -544,7 +547,7 @@ public interface AsyncRedisClient {
      * @param max max score
      * @return the number of elements in the specified score range.
      */
-    Future<Long> zcount(String key, String min, String max);
+    Long zcount(String key, String min, String max);
 
     /**
      * Increments the score of member in the sorted set stored at key by increment.
@@ -554,7 +557,7 @@ public interface AsyncRedisClient {
      * @param member    set member
      * @return the new score of member (a double precision floating point number), represented as string.
      */
-    Future<Double> zincrBy(String key, double increment, Object member);
+    Double zincrBy(String key, double increment, Object member);
 
     /**
      * Computes the intersection of numkeys sorted sets given by the specified keys,
@@ -567,9 +570,9 @@ public interface AsyncRedisClient {
      * @param aggregate   aggregate .if null,default use ZSetAggregate.SUM
      * @return
      */
-    Future<Long> zinterStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
+    Long zinterStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
 
-    Future<Long> zunionStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
+    Long zunionStore(String destination, String[] keys, int[] weights, ZSetAggregate aggregate);
 
     /**
      * Returns the specified range of elements in the sorted set stored at key. The elements are considered to be ordered from the lowest to the highest score. Lexicographical order is used for elements with equal score.
@@ -579,17 +582,17 @@ public interface AsyncRedisClient {
      * @param stop  stop index
      * @return list of elements in the specified range (optionally with their scores).
      */
-    Future<List<?>> zrange(String key, int start, int stop);
+    List<?> zrange(String key, int start, int stop);
 
-    Future<List<ZEntity<?>>> zrangeWithScores(String key, int start, int stop);
+    List<ZEntity<?>> zrangeWithScores(String key, int start, int stop);
 
-    Future<List<?>> zrangeByScore(String key, String min, String max);
+    List<?> zrangeByScore(String key, String min, String max);
 
-    Future<List<?>> zrangeByScore(String key, String min, String max, int offset, int count);
+    List<?> zrangeByScore(String key, String min, String max, int offset, int count);
 
-    Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max);
+    List<ZEntity<?>> zrangeByScoreWithScores(String key, String min, String max);
 
-    Future<List<ZEntity<?>>> zrangeByScoreWithScores(String key, String min, String max, int offset, int count);
+    List<ZEntity<?>> zrangeByScoreWithScores(String key, String min, String max, int offset, int count);
 
     /**
      * Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
@@ -599,7 +602,7 @@ public interface AsyncRedisClient {
      * @return If member exists in the sorted set, Integer reply: the rank of member.
      *         If member does not exist in the sorted set or key does not exist, Bulk reply: nil.
      */
-    Future<Long> zrank(String key, Object member);
+    Long zrank(String key, Object member);
 
     /**
      * Removes the specified members from the sorted set stored at key. Non existing members are ignored.
@@ -609,7 +612,7 @@ public interface AsyncRedisClient {
      * @param members remove members
      * @return The number of members removed from the sorted set, not including non existing members.
      */
-    Future<Long> zrem(String key, Object... members);
+    Long zrem(String key, Object... members);
 
     /**
      * Removes all elements in the sorted set stored at key with rank between start and stop. Both start and stop are 0 -based indexes with 0 being the element with the lowest score.
@@ -619,7 +622,7 @@ public interface AsyncRedisClient {
      * @param stop  stop
      * @return the number of elements removed.
      */
-    Future<Long> zremRangeByRank(String key, int start, int stop);
+    Long zremRangeByRank(String key, int start, int stop);
 
     /**
      * Removes all elements in the sorted set stored at key with a score between min and max (inclusive).
@@ -629,19 +632,19 @@ public interface AsyncRedisClient {
      * @param max max score.format by ZNumbers
      * @return the number of elements removed.
      */
-    Future<Long> zremRangeByScore(String key, String min, String max);
+    Long zremRangeByScore(String key, String min, String max);
 
-    Future<List<?>> zrevRange(String key, int start, int stop);
+    List<?> zrevRange(String key, int start, int stop);
 
-    Future<List<ZEntity<?>>> zrevRangeWithScores(String key, int start, int stop);
+    List<ZEntity<?>> zrevRangeWithScores(String key, int start, int stop);
 
-    Future<List<?>> zrevRangeByScore(String key, String max, String min);
-    Future<List<?>> zrevRangeByScore(String key, String max, String min, int offset, int count);
+    List<?> zrevRangeByScore(String key, String max, String min);
+    List<?> zrevRangeByScore(String key, String max, String min, int offset, int count);
 
-    Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min);
-    Future<List<ZEntity<?>>> zrevRangeByScoreWithScores(String key, String max, String min, int offset, int count);
+    List<ZEntity<?>> zrevRangeByScoreWithScores(String key, String max, String min);
+    List<ZEntity<?>> zrevRangeByScoreWithScores(String key, String max, String min, int offset, int count);
 
-    Future<Long> zrevRank(String key, Object member);
+    Long zrevRank(String key, Object member);
     /**
      * Returns the score of member in the sorted set at key.
      * If member does not exist in the sorted set, or key does not exist, nil is returned.
@@ -650,34 +653,32 @@ public interface AsyncRedisClient {
      * @param member member
      * @return the score of member (a double precision floating point number), represented as string.
      */
-    Future<Double> zscore(String key, Object member);
+    Double zscore(String key, Object member);
 
-    Future<Reply> eval(String script, String[] keys, byte[]... args);
+    Reply eval(String script, String[] keys, byte[]... args);
 
-    Future<Reply> evalSha(String sha1, String[] keys, byte[]... args);
+    Reply evalSha(String sha1, String[] keys, byte[]... args);
 
-    Future<String> scriptLoad(String script);
-    Future<Long> scriptExists(String script);
-    Future<List<Integer>> scriptExists(String[]  scripts);
-    Future<String> scriptFlush();
-    Future<String> scriptKill();
+    String scriptLoad(String script);
+    Long scriptExists(String script);
+    List<Integer> scriptExists(String[]  scripts);
+    String scriptFlush();
+    String scriptKill();
 
     //servers
-    Future<String>  bgRewriteAOF();
-    Future<String> bgSave();
-    Future<String> clientKill(String ip, int port);
-    Future<String> clientList();
-    Future<String> configGet(String parameter);
-    Future<String> configResetStat();
-    Future<String> configSet(String config, String parameter);
-    Future<Long> dbSize();
-    Future<String> flushAll();
-    Future<String> flushDB();
-    Future<String> info();
-    Future<Long> lastSave();
-    Future<String> save();
-    Future<String> shutdown(boolean save);
-    Future<String> slaveOf(String host, int port);
-
-
+    String  bgRewriteAOF();
+    String bgSave();
+    String clientKill(String ip, int port);
+    String clientList();
+    String configGet(String parameter);
+    String configResetStat();
+    String configSet(String config, String parameter);
+    Long dbSize();
+    String flushAll();
+    String flushDB();
+    String info();
+    Long lastSave();
+    String save();
+    String shutdown(boolean save);
+    String slaveOf(String host, int port);
 }

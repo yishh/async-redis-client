@@ -409,7 +409,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     }
 
     @Override
-    public Future<List<Object>> mget(String[] key) {
+    public Future<List<?>> mget(String[] key) {
         //noinspection unchecked
         return sendCommand(Commands.MGET, Transcoder.SERIALIZING_TRANSCODER, key);
     }

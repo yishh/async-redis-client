@@ -7,6 +7,17 @@ async-redis-client
  		AsyncRedisClient client = new NettyRedisClient("172.16.3.213:6379", 1, null);
  		String result = client.set("TEST_KEY2", "CACHED").get(1, TimeUnit.SECONDS);
         String cached = (String) client.get("TEST_KEY2").get(1, TimeUnit.SECONDS);
+        
+
+## mvn
+
+mvn 仓库 :https://oss.sonatype.org/content/repositories/snapshots/
+
+		<dependency>
+  			<groupId>mobi.51app</groupId>
+  			<artifactId>async-redis-client</artifactId>
+  			<version>0.1-SNAPSHOT</version>
+		</dependency>
 
 ## 优势
 

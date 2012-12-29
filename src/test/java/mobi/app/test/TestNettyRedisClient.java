@@ -173,7 +173,7 @@ public class TestNettyRedisClient extends TestCase {
         map.put("MAPMX_KEY1", "TES");
         map.put("MAPMX_KEY2", "EST");
         client.msetObjectNx(map).get();
-        List<Object> result = client.mget(new String[]{"MAPMX_KEY1", "MAPMX_KEY2", "NON_EXIST"}).get();
+        List<String> result = (List<String>) client.mget(new String[]{"MAPMX_KEY1", "MAPMX_KEY2", "NON_EXIST"}).get();
         assertEquals("TES", result.get(0));
         assertEquals("EST", result.get(1));
         assertEquals(null, result.get(2));
