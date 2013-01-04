@@ -7,6 +7,10 @@ async-redis-client
  		AsyncRedisClient client = new NettyRedisClient("172.16.3.213:6379", 1, null);
  		String result = client.set("TEST_KEY2", "CACHED").get(1, TimeUnit.SECONDS);
         String cached = (String) client.get("TEST_KEY2").get(1, TimeUnit.SECONDS);
+
+        RedisClient client = new SyncRedisClient("172.16.3.213:6379", 1, null, 1, TimeUnit.SECONDS);
+        String result = client.set("TEST_KEY2", "CACHED");
+        String cached = (String) client.get("TEST_KEY2");
         
 
 ## mvn
