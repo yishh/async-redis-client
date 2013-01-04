@@ -16,13 +16,13 @@ public interface RedisClient {
 
     void close();
     //connect commands
-    String auth(String password) ;
+    String auth(final String password) ;
 
-    String echo(String message);
+    String echo(final String message);
 
     String ping();
 
-    String select(int db);
+    String select(final int db);
 
     String quit();
 
