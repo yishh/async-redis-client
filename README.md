@@ -16,7 +16,7 @@ mvn 仓库 :https://oss.sonatype.org/content/repositories/snapshots/
 		<dependency>
   			<groupId>mobi.51app</groupId>
   			<artifactId>async-redis-client</artifactId>
-  			<version>0.1-SNAPSHOT</version>
+  			<version>0.1.1-SNAPSHOT</version>
 		</dependency>
 
 ## 优势
