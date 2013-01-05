@@ -4,8 +4,6 @@ import mobi.app.redis.netty.reply.Reply;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /**
  * User: thor
@@ -13,6 +11,10 @@ import java.util.concurrent.TimeoutException;
  * Time: 下午3:41
  */
 public interface RedisClient {
+    void setClosedHandler(AsyncRedisClient.ClosedHandler handler);
+    void setConnectedHandler(AsyncRedisClient.ConnectedHandler handler);
+    AsyncRedisClient.ClosedHandler getClosedHandler();
+    AsyncRedisClient.ConnectedHandler getConnectedHandler();
 
     void close();
     //connect commands

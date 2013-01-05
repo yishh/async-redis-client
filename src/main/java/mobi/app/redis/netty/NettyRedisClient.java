@@ -104,12 +104,15 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
                 throw new RedisException(e);
             }
         }
+        if (connectedHandler != null)
+            connectedHandler.onConnected(this);
     }
 
     public void close() throws InterruptedException {
         channel.close().await(500);
         timer.stop();
         nioClientSocketChannelFactory.releaseExternalResources();
+
     }
 
 
@@ -119,6 +122,31 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
         return command.getReply();
     }
 
+
+    private ClosedHandler closedHandler;
+
+    @Override
+    public void setClosedHandler(ClosedHandler handler) {
+        closedHandler = handler;
+    }
+
+
+    private ConnectedHandler connectedHandler;
+
+    @Override
+    public void setConnectedHandler(ConnectedHandler handler) {
+        connectedHandler = handler;
+    }
+
+    @Override
+    public ClosedHandler getClosedHandler() {
+        return closedHandler;
+    }
+
+    @Override
+    public ConnectedHandler getConnectedHandler() {
+        return connectedHandler;
+    }
 
     @Override
     public Future<String> auth(String password) {
@@ -1218,6 +1246,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         //连接断开后清空当前的commandQueue ,
         commandQueue.clear();
+        if(closedHandler!=null) closedHandler.onClosed(this);
     }
 
     @Override

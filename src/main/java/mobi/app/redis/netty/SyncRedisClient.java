@@ -1,8 +1,6 @@
 package mobi.app.redis.netty;
 
-import mobi.app.redis.RedisClient;
-import mobi.app.redis.ZEntity;
-import mobi.app.redis.ZSetAggregate;
+import mobi.app.redis.*;
 import mobi.app.redis.netty.reply.Reply;
 
 import java.util.List;
@@ -21,10 +19,41 @@ public class SyncRedisClient implements RedisClient {
     final int timeout;
     final TimeUnit timeUnit;
 
+    public SyncRedisClient(RedisConnection connection) {
+        this(connection.address, connection.db, connection.password, connection.timeout, connection.timeUnit);
+    }
+
     public SyncRedisClient(String address, int db, String password, int timeout, TimeUnit timeUnit) {
         asyncClient = new NettyRedisClient(address, db, password);
         this.timeout = timeout;
         this.timeUnit = timeUnit;
+    }
+
+    private AsyncRedisClient.ClosedHandler closedHandler;
+
+    @Override
+    public void setClosedHandler(AsyncRedisClient.ClosedHandler handler) {
+        closedHandler = handler;
+        asyncClient.setClosedHandler(closedHandler);
+    }
+
+
+    private AsyncRedisClient.ConnectedHandler connectedHandler;
+
+    @Override
+    public void setConnectedHandler(AsyncRedisClient.ConnectedHandler handler) {
+        connectedHandler = handler;
+        asyncClient.setConnectedHandler(connectedHandler);
+    }
+
+    @Override
+    public AsyncRedisClient.ClosedHandler getClosedHandler() {
+        return closedHandler;
+    }
+
+    @Override
+    public AsyncRedisClient.ConnectedHandler getConnectedHandler() {
+        return connectedHandler;
     }
 
     @Override

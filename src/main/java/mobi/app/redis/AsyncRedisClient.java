@@ -12,6 +12,17 @@ import java.util.concurrent.Future;
  * Time: 上午10:31
  */
 public interface AsyncRedisClient {
+    public static interface ClosedHandler{
+        void onClosed(AsyncRedisClient client);
+    }
+    public static interface ConnectedHandler{
+        void onConnected(AsyncRedisClient client);
+    }
+
+    void setClosedHandler(ClosedHandler handler);
+    void setConnectedHandler(ConnectedHandler handler);
+    ClosedHandler getClosedHandler();
+    ConnectedHandler getConnectedHandler();
     //connect commands
     Future<String> auth(String password);
 
