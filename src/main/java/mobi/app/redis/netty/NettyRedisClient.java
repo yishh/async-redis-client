@@ -1206,6 +1206,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+        if(!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
         Command message = (Command) e.getMessage();
         logger.debug("send command [{}]", message.getName());
         Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
