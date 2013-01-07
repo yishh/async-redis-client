@@ -18,6 +18,7 @@ public class SyncRedisClient implements RedisClient {
     final NettyRedisClient asyncClient;
     final int timeout;
     final TimeUnit timeUnit;
+    final String hashKey;
 
     public SyncRedisClient(RedisConnection connection) {
         this(connection.address, connection.db, connection.password, connection.timeout, connection.timeUnit);
@@ -27,7 +28,9 @@ public class SyncRedisClient implements RedisClient {
         asyncClient = new NettyRedisClient(address, db, password);
         this.timeout = timeout;
         this.timeUnit = timeUnit;
+        hashKey = String.format("%s|%s", address, db);
     }
+
 
     private AsyncRedisClient.ClosedHandler closedHandler;
 
@@ -54,6 +57,16 @@ public class SyncRedisClient implements RedisClient {
     @Override
     public AsyncRedisClient.ConnectedHandler getConnectedHandler() {
         return connectedHandler;
+    }
+
+    @Override
+    public String hashKey() {
+        return hashKey;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return asyncClient.isAvailable();
     }
 
     @Override

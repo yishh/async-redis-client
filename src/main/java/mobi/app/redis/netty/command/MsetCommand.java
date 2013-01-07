@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.util.Map;
 
@@ -16,7 +17,7 @@ public class MsetCommand<T> extends BaseCommand<T>{
         byte[][] byteArgs = new byte[map.size() * 2][];
         int i = 0;
         for(String key : map.keySet()){
-            byteArgs[i] =  tu.encodeString(key);
+            byteArgs[i] =  TranscoderUtils.encodeString(key);
             //noinspection unchecked
             byteArgs[i + 1] =  getTranscoder().encode(map.get(key));
             i += 2;

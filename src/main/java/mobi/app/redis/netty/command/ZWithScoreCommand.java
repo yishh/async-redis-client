@@ -3,6 +3,7 @@ package mobi.app.redis.netty.command;
 import mobi.app.redis.ZEntity;
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +18,10 @@ public class ZWithScoreCommand<T> extends BaseCommand<T> {
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[args.length + 1][];
-        byteArgs[0] = tu.encodeString(String.valueOf(key));
+        byteArgs[0] = TranscoderUtils.encodeString(String.valueOf(key));
         int i = 1;
         for (String arg : args) {
-            byteArgs[i] = tu.encodeString(arg);
+            byteArgs[i] = TranscoderUtils.encodeString(arg);
             i += 1;
         }
         init(byteArgs);

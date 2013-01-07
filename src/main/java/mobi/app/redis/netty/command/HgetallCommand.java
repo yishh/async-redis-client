@@ -2,6 +2,7 @@ package mobi.app.redis.netty.command;
 
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +18,7 @@ public class HgetallCommand<T> extends BaseCommand<T> {
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[1][];
-        byteArgs[0] = tu.encodeString(key);
+        byteArgs[0] = TranscoderUtils.encodeString(key);
         init(byteArgs);
     }
 
@@ -28,7 +29,7 @@ public class HgetallCommand<T> extends BaseCommand<T> {
         Map cached = new HashMap();
         if (!results.isEmpty()) {
             for (int i = 0; i < results.size(); ) {
-                String key = tu.decodeString(results.get(i));
+                String key = TranscoderUtils.decodeString(results.get(i));
                 cached.put(key, transcoder.decode(results.get(i + 1)));
                 i += 2;
             }

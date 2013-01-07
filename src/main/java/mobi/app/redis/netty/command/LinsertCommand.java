@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -16,8 +17,8 @@ public class LinsertCommand<T> extends BaseCommand<T> {
         else
             setTranscoder(SERIALIZING_TRANSCODER);
         byte[][] byteArgs = new byte[4][];
-        byteArgs[0] = tu.encodeString(key);
-        byteArgs[1] = tu.encodeString(position);
+        byteArgs[0] = TranscoderUtils.encodeString(key);
+        byteArgs[1] = TranscoderUtils.encodeString(position);
         //noinspection unchecked
         byteArgs[2] =  getTranscoder().encode(pivot);
         //noinspection unchecked

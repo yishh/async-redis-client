@@ -2,6 +2,7 @@ package mobi.app.redis.netty.command;
 
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -13,7 +14,7 @@ public class ZScoreCommand<T> extends BaseCommand<T> {
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[2][];
-        byteArgs[0] = tu.encodeString(String.valueOf(key));
+        byteArgs[0] = TranscoderUtils.encodeString(String.valueOf(key));
         //noinspection unchecked
         byteArgs[1] = getTranscoder().encode(member);
 

@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -12,8 +13,8 @@ public class RestoreCommand<T>  extends BaseCommand<T> {
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[3][];
-        byteArgs[0] = tu.encodeString(key);
-        byteArgs[1] = tu.encodeString(String.valueOf(expire));
+        byteArgs[0] = TranscoderUtils.encodeString(key);
+        byteArgs[1] = TranscoderUtils.encodeString(String.valueOf(expire));
         byteArgs[2] = v;
         init(byteArgs);
     }

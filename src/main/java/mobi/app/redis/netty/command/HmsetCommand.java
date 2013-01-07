@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.util.Map;
 
@@ -14,10 +15,10 @@ public class HmsetCommand<T> extends BaseCommand<T>{
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[map.size() * 2 + 1][];
-        byteArgs[0] =  tu.encodeString(key);
+        byteArgs[0] =  TranscoderUtils.encodeString(key);
         int i = 1;
         for(String field : map.keySet()){
-            byteArgs[i] =  tu.encodeString(field);
+            byteArgs[i] =  TranscoderUtils.encodeString(field);
             //noinspection unchecked
             byteArgs[i + 1] =  getTranscoder().encode(map.get(field));
             i += 2;

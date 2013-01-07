@@ -3,7 +3,6 @@ package mobi.app.redis.netty.command;
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.SerializingTranscoder;
 import mobi.app.redis.transcoders.Transcoder;
-import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ public abstract class BaseCommand<T> implements Command {
     protected String command;
     protected List<byte[]> args;
     protected ReplyFutureTask<T> future;
-    final static TranscoderUtils tu = new TranscoderUtils(true);
+//    final static TranscoderUtils tu = new TranscoderUtils(true);
     final static Transcoder<Object> SERIALIZING_TRANSCODER = new SerializingTranscoder();
     Transcoder transcoder;
 

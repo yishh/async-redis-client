@@ -28,33 +28,33 @@ public class SerializingTranscoder implements Transcoder<Object>{
     static final int SPECIAL_FLOAT = (6 << 8);
     static final int SPECIAL_DOUBLE = (7 << 8);
     static final int SPECIAL_BYTEARRAY = (8 << 8);
-    private final TranscoderUtils tu = new TranscoderUtils(false);
+//    private final TranscoderUtils tu = new TranscoderUtils(false);
     @Override
     public byte[] encode(Object o) {
-        byte[] b = null;
+        byte[] b;
         int flags = 0;
         if (o instanceof String) {
             b = encodeString((String) o);
         } else if (o instanceof Long) {
-            b = tu.encodeLong((Long) o);
+            b = TranscoderUtils.encodeLong((Long) o);
             flags |= SPECIAL_LONG;
         } else if (o instanceof Integer) {
-            b = tu.encodeInt((Integer) o);
+            b = TranscoderUtils.encodeInt((Integer) o);
             flags |= SPECIAL_INT;
         } else if (o instanceof Boolean) {
-            b = tu.encodeBoolean((Boolean) o);
+            b = TranscoderUtils.encodeBoolean((Boolean) o);
             flags |= SPECIAL_BOOLEAN;
         } else if (o instanceof Date) {
-            b = tu.encodeLong(((Date) o).getTime());
+            b = TranscoderUtils.encodeLong(((Date) o).getTime());
             flags |= SPECIAL_DATE;
         } else if (o instanceof Byte) {
-            b = tu.encodeByte((Byte) o);
+            b = TranscoderUtils.encodeByte((Byte) o);
             flags |= SPECIAL_BYTE;
         } else if (o instanceof Float) {
-            b = tu.encodeInt(Float.floatToRawIntBits((Float) o));
+            b = TranscoderUtils.encodeInt(Float.floatToRawIntBits((Float) o));
             flags |= SPECIAL_FLOAT;
         } else if (o instanceof Double) {
-            b = tu.encodeLong(Double.doubleToRawLongBits((Double) o));
+            b = TranscoderUtils.encodeLong(Double.doubleToRawLongBits((Double) o));
             flags |= SPECIAL_DOUBLE;
         } else if (o instanceof byte[]) {
             b = (byte[]) o;
@@ -78,7 +78,7 @@ public class SerializingTranscoder implements Transcoder<Object>{
             }
         }
         byte[] fullData = new byte[4 + b.length];
-        byte[] flagBytes = tu.encodeInt(flags);
+        byte[] flagBytes = TranscoderUtils.encodeInt(flags);
         System.arraycopy(flagBytes, 0, fullData, 0, flagBytes.length);
         System.arraycopy(b, 0, fullData, flagBytes.length, b.length);
         return fullData;
@@ -87,7 +87,7 @@ public class SerializingTranscoder implements Transcoder<Object>{
     @Override
     public Object decode(byte[] v) {
 
-        int dataFlags = tu.decodeInt(Arrays.copyOfRange(v, 0, 4));
+        int dataFlags = TranscoderUtils.decodeInt(Arrays.copyOfRange(v, 0, 4));
         byte[] data = Arrays.copyOfRange(v, 4, v.length);
 
         Object rv = null;
@@ -100,25 +100,25 @@ public class SerializingTranscoder implements Transcoder<Object>{
         } else if (flags != 0 && data != null) {
             switch (flags) {
                 case SPECIAL_BOOLEAN:
-                    rv = tu.decodeBoolean(data);
+                    rv = TranscoderUtils.decodeBoolean(data);
                     break;
                 case SPECIAL_INT:
-                    rv = tu.decodeInt(data);
+                    rv = TranscoderUtils.decodeInt(data);
                     break;
                 case SPECIAL_LONG:
-                    rv = tu.decodeLong(data);
+                    rv = TranscoderUtils.decodeLong(data);
                     break;
                 case SPECIAL_DATE:
-                    rv = new Date(tu.decodeLong(data));
+                    rv = new Date(TranscoderUtils.decodeLong(data));
                     break;
                 case SPECIAL_BYTE:
-                    rv = tu.decodeByte(data);
+                    rv = TranscoderUtils.decodeByte(data);
                     break;
                 case SPECIAL_FLOAT:
-                    rv = Float.intBitsToFloat(tu.decodeInt(data));
+                    rv = Float.intBitsToFloat(TranscoderUtils.decodeInt(data));
                     break;
                 case SPECIAL_DOUBLE:
-                    rv = Double.longBitsToDouble(tu.decodeLong(data));
+                    rv = Double.longBitsToDouble(TranscoderUtils.decodeLong(data));
                     break;
                 case SPECIAL_BYTEARRAY:
                     rv = data;

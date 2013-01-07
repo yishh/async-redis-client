@@ -17,6 +17,7 @@ import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     ClientBootstrap bootstrap;
     ChannelPipeline pipeline;
     Timer timer;
+    boolean isAvailable;
 
     public NettyRedisClient(String address, int db, String password) {
         this.address = address;
@@ -108,6 +110,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
             connectedHandler.onConnected(this);
     }
 
+    @PreDestroy
     public void close() throws InterruptedException {
         channel.close().await(500);
         timer.stop();
@@ -146,6 +149,11 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     @Override
     public ConnectedHandler getConnectedHandler() {
         return connectedHandler;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return isAvailable;
     }
 
     @Override
@@ -1206,7 +1214,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        if(!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
+        if (!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
         Command message = (Command) e.getMessage();
         logger.debug("send command [{}]", message.getName());
         Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
@@ -1241,13 +1249,15 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
         commandQueue.clear();
+        isAvailable = true;
     }
 
     @Override
     public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         //连接断开后清空当前的commandQueue ,
         commandQueue.clear();
-        if(closedHandler!=null) closedHandler.onClosed(this);
+        isAvailable = false;
+        if (closedHandler != null) closedHandler.onClosed(this);
     }
 
     @Override

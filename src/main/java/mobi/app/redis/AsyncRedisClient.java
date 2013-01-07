@@ -23,7 +23,12 @@ public interface AsyncRedisClient {
     void setConnectedHandler(ConnectedHandler handler);
     ClosedHandler getClosedHandler();
     ConnectedHandler getConnectedHandler();
+
+
+    boolean isAvailable();
     //connect commands
+
+
     Future<String> auth(String password);
 
     Future<String> echo(String message);

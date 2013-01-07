@@ -2,6 +2,7 @@ package mobi.app.redis;
 
 import mobi.app.redis.netty.reply.Reply;
 
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,11 @@ public interface RedisClient {
     AsyncRedisClient.ClosedHandler getClosedHandler();
     AsyncRedisClient.ConnectedHandler getConnectedHandler();
 
+
+    String hashKey();
+    boolean isAvailable();
+
+    @PreDestroy
     void close();
     //connect commands
     String auth(final String password) ;

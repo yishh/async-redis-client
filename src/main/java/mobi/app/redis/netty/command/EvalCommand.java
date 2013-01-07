@@ -2,6 +2,7 @@ package mobi.app.redis.netty.command;
 
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -17,9 +18,9 @@ public class EvalCommand extends BaseCommand<Reply> {
             setTranscoder(SERIALIZING_TRANSCODER);
         byte[][] byteArgs = new byte[args.length + keys.length + 2][];
         byteArgs[0] = script;
-        byteArgs[1] = tu.encodeString(String.valueOf(keys.length));
+        byteArgs[1] = TranscoderUtils.encodeString(String.valueOf(keys.length));
         for (int i = 0; i < keys.length; i++) {
-            byteArgs[i + 2] = tu.encodeString(keys[i]);
+            byteArgs[i + 2] = TranscoderUtils.encodeString(keys[i]);
         }
         for (int i = 0; i < args.length; i++) {
             byteArgs[i + 2 + keys.length] = args[i];

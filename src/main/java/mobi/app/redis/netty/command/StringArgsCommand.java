@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -24,7 +25,7 @@ public class StringArgsCommand<T> extends BaseCommand<T> {
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[args.length][];
         for (int i = 0; i < args.length; i++) {
-            byteArgs[i] = tu.encodeString(args[i]);
+            byteArgs[i] = TranscoderUtils.encodeString(args[i]);
         }
         init(byteArgs);
     }
@@ -42,7 +43,7 @@ public class StringArgsCommand<T> extends BaseCommand<T> {
             setTranscoder(SERIALIZING_TRANSCODER);
         byte[][] byteArgs = new byte[args.length + keys.length][];
         for (int i = 0; i < keys.length; i++) {
-            byteArgs[i] = tu.encodeString(keys[i]);
+            byteArgs[i] = TranscoderUtils.encodeString(keys[i]);
         }
 
         for (int i = 0; i < args.length; i++) {

@@ -29,22 +29,22 @@ import java.io.UnsupportedEncodingException;
  */
 public final class TranscoderUtils {
 
-    private final boolean packZeros;
+//    private final boolean packZeros;
 
-    final String charset = "utf-8";
+    static final String charset = "utf-8";
 
     /**
      * Get an instance of TranscoderUtils.
      *
      * @param pack if true, remove all zero bytes from the MSB of the packed num
      */
-    public TranscoderUtils(boolean pack) {
-        super();
-        packZeros = pack;
-    }
+//    public TranscoderUtils(boolean pack) {
+//        super();
+//        packZeros = pack;
+//    }
 
 
-    public String decodeString(byte[] data) {
+    public static String decodeString(byte[] data) {
         String rv = null;
         try {
             if (data != null) {
@@ -59,7 +59,7 @@ public final class TranscoderUtils {
     /**
      * Encode a string into the current character set.
      */
-    public byte[] encodeString(String in) {
+    public static byte[] encodeString(String in) {
         byte[] rv = null;
         try {
             rv = in.getBytes(charset);
@@ -70,32 +70,32 @@ public final class TranscoderUtils {
     }
 
 
-    public byte[] encodeNum(long l, int maxBytes) {
+    public static byte[] encodeNum(long l, int maxBytes) {
         byte[] rv = new byte[maxBytes];
         for (int i = 0; i < rv.length; i++) {
             int pos = rv.length - i - 1;
             rv[pos] = (byte) ((l >> (8 * i)) & 0xff);
         }
-        if (packZeros) {
-            int firstNon0 = 0;
-            // Just looking for what we can reduce
-            while (firstNon0 < rv.length && rv[firstNon0] == 0) {
-                firstNon0++;
-            }
-            if (firstNon0 > 0) {
-                byte[] tmp = new byte[rv.length - firstNon0];
-                System.arraycopy(rv, firstNon0, tmp, 0, rv.length - firstNon0);
-                rv = tmp;
-            }
-        }
+//        if (packZeros) {
+//            int firstNon0 = 0;
+//            // Just looking for what we can reduce
+//            while (firstNon0 < rv.length && rv[firstNon0] == 0) {
+//                firstNon0++;
+//            }
+//            if (firstNon0 > 0) {
+//                byte[] tmp = new byte[rv.length - firstNon0];
+//                System.arraycopy(rv, firstNon0, tmp, 0, rv.length - firstNon0);
+//                rv = tmp;
+//            }
+//        }
         return rv;
     }
 
-    public byte[] encodeLong(long l) {
+    public static byte[] encodeLong(long l) {
         return encodeNum(l, 8);
     }
 
-    public long decodeLong(byte[] b) {
+    public static long decodeLong(byte[] b) {
         long rv = 0;
         for (byte i : b) {
             rv = (rv << 8) | (i < 0 ? 256 + i : i);
@@ -103,20 +103,20 @@ public final class TranscoderUtils {
         return rv;
     }
 
-    public byte[] encodeInt(int in) {
+    public static byte[] encodeInt(int in) {
         return encodeNum(in, 4);
     }
 
-    public int decodeInt(byte[] in) {
+    public static int decodeInt(byte[] in) {
         assert in.length <= 4 : "Too long to be an int (" + in.length + ") bytes";
         return (int) decodeLong(in);
     }
 
-    public byte[] encodeByte(byte in) {
+    public static byte[] encodeByte(byte in) {
         return new byte[]{in};
     }
 
-    public byte decodeByte(byte[] in) {
+    public static byte decodeByte(byte[] in) {
         assert in.length <= 1 : "Too long for a byte";
         byte rv = 0;
         if (in.length == 1) {
@@ -125,13 +125,13 @@ public final class TranscoderUtils {
         return rv;
     }
 
-    public byte[] encodeBoolean(boolean b) {
+    public static byte[] encodeBoolean(boolean b) {
         byte[] rv = new byte[1];
         rv[0] = (byte) (b ? '1' : '0');
         return rv;
     }
 
-    public boolean decodeBoolean(byte[] in) {
+    public static boolean decodeBoolean(byte[] in) {
         assert in.length == 1 : "Wrong length for a boolean";
         return in[0] == '1';
     }

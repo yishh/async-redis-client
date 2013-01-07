@@ -2,6 +2,7 @@ package mobi.app.redis.netty.command;
 
 import mobi.app.redis.ZEntity;
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 import java.util.Map;
 
@@ -15,13 +16,13 @@ public class ZaddCommand<T> extends BaseCommand<T> {
         this.command = command;
         setTranscoder(transcoder);
         byte[][] byteArgs = new byte[(entities.length + 1) * 2 + 1][];
-        byteArgs[0] = tu.encodeString(String.valueOf(key));
-        byteArgs[1] = tu.encodeString(String.valueOf(score));
+        byteArgs[0] = TranscoderUtils.encodeString(String.valueOf(key));
+        byteArgs[1] = TranscoderUtils.encodeString(String.valueOf(score));
         //noinspection unchecked
         byteArgs[2] = getTranscoder().encode(member);
         int i = 3;
         for (ZEntity entity : entities) {
-            byteArgs[i] = tu.encodeString(String.valueOf(entity.score));
+            byteArgs[i] = TranscoderUtils.encodeString(String.valueOf(entity.score));
             //noinspection unchecked
             byteArgs[i + 1] = getTranscoder().encode(entity.member);
             i += 2;

@@ -1,6 +1,7 @@
 package mobi.app.redis.netty.command;
 
 import mobi.app.redis.transcoders.Transcoder;
+import mobi.app.redis.transcoders.TranscoderUtils;
 
 /**
  * User: thor
@@ -15,8 +16,9 @@ public class HashCommand<T> extends BaseCommand<T>{
         else
             setTranscoder(SERIALIZING_TRANSCODER);
         byte[][] byteArgs = new byte[args.length + 2][];
-        byteArgs[0] = tu.encodeString(key);
-        byteArgs[1] = tu.encodeString(field);
+
+        byteArgs[0] = TranscoderUtils.encodeString(key);
+        byteArgs[1] = TranscoderUtils.encodeString(field);
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof byte[]) {
                 byteArgs[i+2] = (byte[]) args[i];
