@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TestNettyRedisClient extends TestCase {
 
-    NettyRedisClient client = new NettyRedisClient("172.16.3.213:6379", 1, null);
+    NettyRedisClient client = new NettyRedisClient("172.16.3.214:6379", 1, null);
 
 
     public void testEcho() throws ExecutionException, InterruptedException {
@@ -193,7 +193,11 @@ public class TestNettyRedisClient extends TestCase {
         client.delete(key).get();
         long reply = client.incr(key).get();
         assertEquals(1, reply);
+        reply = client.getInt(key).get();
+        assertEquals(1, reply);
         reply = client.incr(key).get();
+        assertEquals(2, reply);
+        reply = client.getInt(key).get();
         assertEquals(2, reply);
         reply = client.incrBy(key, 3).get();
         assertEquals(5, reply);

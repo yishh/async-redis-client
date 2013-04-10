@@ -24,6 +24,10 @@ public class SyncRedisClient implements RedisClient {
         this(connection.address, connection.db, connection.password, connection.timeout, connection.timeUnit);
     }
 
+    public SyncRedisClient(String address, int db,  int timeout, TimeUnit timeUnit) {
+        this(address, db, null, timeout, timeUnit);
+    }
+
     public SyncRedisClient(String address, int db, String password, int timeout, TimeUnit timeUnit) {
         asyncClient = new NettyRedisClient(address, db, password);
         this.timeout = timeout;
