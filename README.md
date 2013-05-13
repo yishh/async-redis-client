@@ -20,7 +20,7 @@ mvn 仓库 :https://oss.sonatype.org/content/repositories/snapshots/
 		<dependency>
   			<groupId>mobi.51app</groupId>
   			<artifactId>async-redis-client</artifactId>
-  			<version>0.1.3-SNAPSHOT</version>
+  			<version>0.1.4-SNAPSHOT</version>
 		</dependency>
 
 ## 优势
@@ -36,7 +36,7 @@ mvn 仓库 :https://oss.sonatype.org/content/repositories/snapshots/
 
 ## 其他
 
-* 不打算实现pipeline功能。因为pipeline主要是为了解决在bio模式下io利用率较低的问题，使用async-redis-client不需要再使用pipeline的功能了。 如下的使用方式即可:
+* 不打算实现pipeline功能。（因为pipeline主要是为了解决在bio模式下io利用率较低的问题??是否只有这一个好处？）,使用async-redis-client不需要再使用pipeline的功能了。 如下的使用方式即可:
 
 
 		Future<String> result = client.set("TEST_KEY2", "CACHED");
