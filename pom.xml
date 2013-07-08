@@ -11,7 +11,7 @@
 
     <groupId>mobi.51app</groupId>
     <artifactId>async-redis-client</artifactId>
-    <version>0.1.4-SNAPSHOT</version>
+    <version>0.1.5-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>async-redis-client</name>
     <description>A async redis client based on netty</description>

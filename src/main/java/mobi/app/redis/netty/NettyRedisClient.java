@@ -22,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: thor
@@ -43,7 +44,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     ClientBootstrap bootstrap;
     ChannelPipeline pipeline;
     Timer timer;
-    boolean isAvailable;
+    AtomicBoolean isAvailable = new AtomicBoolean(false);
 
     public NettyRedisClient(String address, int db, String password) {
         this.address = address;
@@ -78,6 +79,18 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     protected void init() {
         connect();
+        //add a patch to wait netty channelConnected event !
+//        int waitCount = 0;
+//        while (!isAvailable.get() && waitCount<=3){
+//            try {
+//                Thread.sleep(100);
+//                waitCount ++ ;
+//            } catch (InterruptedException e) {
+//                throw new RedisException(e);
+//            }
+//        }
+
+        commandQueue.clear();
         if (password != null) {
             logger.info("try auth command:");
             auth(password);
@@ -106,6 +119,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
                 throw new RedisException(e);
             }
         }
+        isAvailable.set(true);
         if (connectedHandler != null)
             connectedHandler.onConnected(this);
     }
@@ -153,7 +167,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
 
     @Override
     public boolean isAvailable() {
-        return isAvailable;
+        return isAvailable.get();
     }
 
     @Override
@@ -1215,6 +1229,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
+
         Command message = (Command) e.getMessage();
         logger.debug("send command [{}]", message.getName());
         Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
@@ -1248,15 +1263,15 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     @Override
     public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
-        commandQueue.clear();
-        isAvailable = true;
+//        commandQueue.clear();
+        isAvailable.set(true);
     }
 
     @Override
     public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         //连接断开后清空当前的commandQueue ,
         commandQueue.clear();
-        isAvailable = false;
+        isAvailable.set(false);
         if (closedHandler != null) closedHandler.onClosed(this);
     }
 
