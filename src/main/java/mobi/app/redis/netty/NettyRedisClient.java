@@ -70,8 +70,8 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
         if (pipeline == null) {
             timer = new HashedWheelTimer();
             pipeline = Channels.pipeline(new ReconnectHandler(this, timer), new ReplyDecoder(), this);
+            bootstrap.setPipeline(pipeline);
         }
-        bootstrap.setPipeline(pipeline);
         ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
         connectFuture.awaitUninterruptibly(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         channel = connectFuture.getChannel();
@@ -133,9 +133,12 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     }
 
 
-    private Future sendCommand(Commands commands, Transcoder transcoder, Object... args) {
+    private synchronized Future sendCommand(Commands commands, Transcoder transcoder, Object... args) {
         @SuppressWarnings("unchecked") Command command = commands.getCommand(transcoder, args);
+//        logger.debug("redis command is : {}", command.toString());
+
         channel.write(command);
+//        System.out.println(Thread.currentThread().getName());
         return command.getReply();
     }
 
@@ -1229,11 +1232,13 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
-
-        Command message = (Command) e.getMessage();
-        logger.debug("send command [{}]", message.getName());
-        Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
-        commandQueue.put(message);
+//        System.out.println(Thread.currentThread().getName());
+//        synchronized (commandQueue) {
+            Command message = (Command) e.getMessage();
+            logger.debug("send command [{}]", message.getName());
+            Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
+            commandQueue.put(message);
+//        }
 //        ctx.sendDownstream(e);
     }
 
@@ -1263,7 +1268,7 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     @Override
     public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         channel = ctx.getChannel();
-//        commandQueue.clear();
+        commandQueue.clear();
         isAvailable.set(true);
     }
 
@@ -1281,5 +1286,6 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
         //TODO 是不是所有的异常都需要关闭连接？
         if (ctx.getChannel().isOpen())
             ctx.getChannel().close();
+
     }
 }

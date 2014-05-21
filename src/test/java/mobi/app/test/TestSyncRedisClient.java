@@ -10,7 +10,9 @@ import mobi.app.redis.netty.SyncRedisClient;
 import mobi.app.redis.netty.reply.MultiBulkReply;
 import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.netty.reply.SingleReply;
+import mobi.app.redis.transcoders.DoubleTranscoder;
 import mobi.app.redis.transcoders.Transcoder;
+import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TestSyncRedisClient extends TestCase {
 
-   static RedisClient client = new SyncRedisClient("172.16.21.45:6379", 1, null, 1, TimeUnit.SECONDS);
+   static RedisClient client = new SyncRedisClient("localhost:6379", 1, null, 1, TimeUnit.SECONDS);
 
 
     public void testEcho() throws ExecutionException, InterruptedException {
@@ -68,10 +70,11 @@ public class TestSyncRedisClient extends TestCase {
     }
 
     public void testConcurrencyOpera() throws InterruptedException {
-        int concurrencyCount = 20;
-        ExecutorService executorService = Executors.newFixedThreadPool(concurrencyCount);
+        int concurrencyCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(concurrencyCount/10);
         final CountDownLatch latch = new CountDownLatch(concurrencyCount);
         final AtomicInteger successCount = new AtomicInteger(0);
+        final RedisClient client1 = new SyncRedisClient("172.16.3.214:6379", 1, null, 1, TimeUnit.SECONDS);
         for (int i = 0; i < concurrencyCount; i++) {
             final int id = i;
             executorService.submit(new Runnable() {
@@ -79,14 +82,26 @@ public class TestSyncRedisClient extends TestCase {
                 public void run() {
                     String key = String.format("TESTKEY-%s", id);
                     String value = String.format("TESTVALUE-%s", id);
+
                     String result;
-                    result = client.set(key, value);
-                    assertEquals("OK", result);
-                    String strCached = (String) client.get(key);
+                    if(id%2 == 0 ) {
+                        result = client.set(key, value);
+                        assertEquals("OK", result);
+                        String strCached = (String) client.get(key);
 //                        assert value.equals(strCached);
 //                        assertEquals(value, strCached);
-                    if (value.equals(strCached))
-                        successCount.incrementAndGet();
+                        System.out.println(strCached);
+                        if (value.equals(strCached))
+                            successCount.incrementAndGet();
+                    }else{
+                        client1.hset(key, id+"", value);
+                        String strCached = (String) client1.hget(key, id+"");
+                        System.out.println(strCached);
+                        if (value.equals(strCached))
+                            successCount.incrementAndGet();
+                    }
+//                    assertEquals("OK", result);
+
 
                     latch.countDown();
 
@@ -370,20 +385,47 @@ public class TestSyncRedisClient extends TestCase {
     }
 
     public void testHgetAndHset() throws ExecutionException, InterruptedException {
-        String key = "HASH_KEY";
-        client.delete(key);
-        String field = "TEST_FIELD";
-        long reply = client.hset(key, field, "OK");
-        assertEquals(1, reply);
-        reply = client.hset(key, field, "KO");
-        assertEquals(0, reply);
-        String cached = (String) client.hget(key, field);
-        assertEquals("KO", cached);
-        reply = client.hset(key, field, 1.01);
-        assertEquals(0, reply);
-        double cachedDouble = client.hgetDouble(key, field);
-        assertEquals(1.01, cachedDouble);
+        long start = System.currentTimeMillis();
+        for(int i= 0; i< 10000; i++) {
+            String key = "HASH_KEY" + i;
+            client.delete(key);
+            String field = "TEST_FIELD";
+            long reply = client.hset(key, field, "OK");
+            assertEquals(1, reply);
+            reply = client.hset(key, field, "KO");
+            assertEquals(0, reply);
+            String cached = (String) client.hget(key, field);
+            assertEquals("KO", cached);
+            reply = client.hset(key, field, 1.01);
+            assertEquals(0, reply);
+            double cachedDouble = client.hgetDouble(key, field);
+            assertEquals(1.01, cachedDouble);
+        }
+        System.out.println(System.currentTimeMillis() - start);
     }
+
+    public void testHgetAndHset1() throws ExecutionException, InterruptedException {
+        Jedis jedis = new Jedis("localhost");
+        long start = System.currentTimeMillis();
+        for(int i= 0; i< 10000; i++) {
+            String key = "HASH_KEY" + i;
+            jedis.del(key);
+            String field = "TEST_FIELD";
+            long reply = jedis.hset(key, field, "OK");
+            assertEquals(1, reply);
+            reply = jedis.hset(key, field, "KO");
+            assertEquals(0, reply);
+            String cached =  jedis.hget(key, field);
+            assertEquals("KO", cached);
+
+            reply = jedis.hset(key, field, "1.01");
+            assertEquals(0, reply);
+            String cachedDouble = jedis.hget(key, field);
+            assertEquals("1.01", cachedDouble);
+        }
+        System.out.println(System.currentTimeMillis() - start);
+    }
+
 
     public void testHdelAndExists() throws ExecutionException, InterruptedException {
         String key = "HASH_KEY1";

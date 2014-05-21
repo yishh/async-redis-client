@@ -11,7 +11,7 @@
 
     <groupId>mobi.51app</groupId>
     <artifactId>async-redis-client</artifactId>
-    <version>0.1.5-SNAPSHOT</version>
+    <version>0.1.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>async-redis-client</name>
     <description>A async redis client based on netty</description>
@@ -61,6 +61,13 @@
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
             <version>3.2.7.Final</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>2.4.2</version>
+            <type>jar</type>
             <scope>provided</scope>
         </dependency>
     </dependencies>

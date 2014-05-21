@@ -4,6 +4,7 @@ import mobi.app.redis.netty.reply.Reply;
 import mobi.app.redis.transcoders.SerializingTranscoder;
 import mobi.app.redis.transcoders.Transcoder;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +21,7 @@ public abstract class BaseCommand<T> implements Command {
     protected String command;
     protected List<byte[]> args;
     protected ReplyFutureTask<T> future;
-//    final static TranscoderUtils tu = new TranscoderUtils(true);
+    //    final static TranscoderUtils tu = new TranscoderUtils(true);
     final static Transcoder<Object> SERIALIZING_TRANSCODER = new SerializingTranscoder();
     Transcoder transcoder;
 
@@ -28,10 +29,25 @@ public abstract class BaseCommand<T> implements Command {
     public BaseCommand() {
     }
 
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        if (args != null && !args.isEmpty()) {
+            for (byte[] arg : args) {
+                try {
+                    builder.append(new String(arg, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return builder.toString();
+    }
+
     @Override
-    public String getName(){
+    public String getName() {
         return command;
     }
+
     protected void init(byte[]... args) {
         this.args = new ArrayList<byte[]>();
         this.args.add(command.getBytes(US_ASCII));

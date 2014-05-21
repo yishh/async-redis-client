@@ -50,6 +50,7 @@ public class ReplyDecoder extends ReplayingDecoder {
                 multiBulkReply = new MultiBulkReply(readInteger(buffer));
                 return checkAndReturn();
             default:
+                buffer.clear();
                 throw new RedisException("Unknown start byte");
 
         }
