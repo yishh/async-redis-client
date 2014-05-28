@@ -19,17 +19,20 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PreDestroy;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Handler;
 
 /**
  * User: thor
  * Date: 12-12-19
  * Time: 上午10:37
  */
-public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedisClient {
+public class NettyRedisClient implements AsyncRedisClient {
     Logger logger = LoggerFactory.getLogger(NettyRedisClient.class);
 
     final static int DEFAULT_TIMEOUT = 5;
@@ -38,108 +41,176 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
     final String password;
     final String host;
     final int port;
+    final int connectionNumber;
 
-    NioClientSocketChannelFactory nioClientSocketChannelFactory;
-    Channel channel;
-    ClientBootstrap bootstrap;
-    ChannelPipeline pipeline;
+    static NioClientSocketChannelFactory nioClientSocketChannelFactory;
+
+    static ClientBootstrap bootstrap;
+
     Timer timer;
+
+
     AtomicBoolean isAvailable = new AtomicBoolean(false);
 
+    static {
+        nioClientSocketChannelFactory = new NioClientSocketChannelFactory(
+                Executors.newCachedThreadPool(),
+                Executors.newCachedThreadPool());
+        bootstrap = new ClientBootstrap(nioClientSocketChannelFactory);
+        bootstrap.setOption("child.tcpNoDelay", true);
+        bootstrap.setPipelineFactory(new RedisClientPipelineFactory());
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                nioClientSocketChannelFactory.releaseExternalResources();
+            }
+        }));
+    }
+
+    RedisChannelHandler handler;
+
+
+    class HandlerWorker {
+        RedisChannelHandler handler;
+        HandlerWorker next;
+    }
+
+    HandlerWorker currentWorker;
+    List<HandlerWorker> workers = new ArrayList<>();
+
     public NettyRedisClient(String address, int db, String password) {
+        this(address, db, password, 1);
+    }
+
+    public NettyRedisClient(String address, int db, String password, int connectionNumber) {
+        assert connectionNumber >= 1;
         this.address = address;
         this.db = db;
         this.password = password;
         String[] parts = address.split(":");
         host = parts[0];
         port = Integer.parseInt(parts[1]);
+        this.connectionNumber = connectionNumber;
+        timer = new HashedWheelTimer();
         init();
-
     }
 
 
     protected void connect() {
-        if (nioClientSocketChannelFactory == null) {
-            nioClientSocketChannelFactory = new NioClientSocketChannelFactory(
-                    Executors.newCachedThreadPool(),
-                    Executors.newCachedThreadPool());
+        if (connectionNumber == 1) {
+            ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
+            connectFuture.awaitUninterruptibly(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+            Channel channel = connectFuture.getChannel();
+            ReconnectHandler reconnectHandler =
+                    (ReconnectHandler) channel.getPipeline().getFirst();
+            reconnectHandler.setClient(this);
+            reconnectHandler.setTimer(timer);
+            handler = (RedisChannelHandler) channel.getPipeline().getLast();
+            handler.authAndSelect(password, db);
+
+        } else {
+            for (int i = 0; i < connectionNumber; i++) {
+                ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
+                connectFuture.awaitUninterruptibly(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+                Channel channel = connectFuture.getChannel();
+                ReconnectHandler reconnectHandler =
+                        (ReconnectHandler) channel.getPipeline().getFirst();
+                reconnectHandler.setClient(this);
+                reconnectHandler.setTimer(timer);
+                RedisChannelHandler handler =
+                        (RedisChannelHandler) channel.getPipeline().getLast();
+
+                handler.authAndSelect(password, db);
+
+
+                HandlerWorker worker = new HandlerWorker();
+                worker.handler = handler;
+                workers.add(worker);
+                if (currentWorker == null) {
+                    currentWorker = worker;
+                } else {
+
+                    HandlerWorker lastWorker = currentWorker.next;
+                    if (lastWorker == null) {
+                        currentWorker.next = worker;
+                    }
+                    while (lastWorker != null) {
+                        if (lastWorker.next == null) {
+                            lastWorker.next = worker;
+                            break;
+                        }
+                        lastWorker = lastWorker.next;
+                    }
+                }
+                if (i == connectionNumber - 1) {
+                    worker.next = currentWorker;
+                }
+            }
         }
-        if (bootstrap == null) {
-            bootstrap = new ClientBootstrap(nioClientSocketChannelFactory);
-        }
-        if (pipeline == null) {
-            timer = new HashedWheelTimer();
-            pipeline = Channels.pipeline(new ReconnectHandler(this, timer), new ReplyDecoder(), this);
-            bootstrap.setPipeline(pipeline);
-        }
+    }
+
+    protected void reconnect(RedisChannelHandler handler) {
         ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(host, port));
         connectFuture.awaitUninterruptibly(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-        channel = connectFuture.getChannel();
+        Channel channel = connectFuture.getChannel();
+        ReconnectHandler reconnectHandler =
+                (ReconnectHandler) channel.getPipeline().getFirst();
+        reconnectHandler.setClient(this);
+        reconnectHandler.setTimer(timer);
+        RedisChannelHandler newHandler =
+                (RedisChannelHandler) channel.getPipeline().getLast();
+        newHandler.authAndSelect(password, db);
+
+        if (handler == this.handler) {
+            this.handler = newHandler;
+        } else {
+            for (HandlerWorker worker : workers) {
+                synchronized (worker) {
+                    if (worker.handler == handler) {
+                        worker.handler = newHandler;
+                    }
+                }
+            }
+        }
     }
 
     protected void init() {
         connect();
-        //add a patch to wait netty channelConnected event !
-//        int waitCount = 0;
-//        while (!isAvailable.get() && waitCount<=3){
-//            try {
-//                Thread.sleep(100);
-//                waitCount ++ ;
-//            } catch (InterruptedException e) {
-//                throw new RedisException(e);
-//            }
-//        }
-
-        commandQueue.clear();
-        if (password != null) {
-            logger.info("try auth command:");
-            auth(password);
-            try {
-                String authReply = auth(password).get(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-                logger.info("auth db reply: {}", authReply);
-            } catch (InterruptedException e) {
-                throw new RedisException(e);
-            } catch (ExecutionException e) {
-                throw new RedisException(e);
-            } catch (TimeoutException e) {
-                throw new RedisException(e);
-            }
-
-        }
-        if (db > 0) {
-            logger.debug("try to select db: {} ", db);
-            try {
-                String selectReply = select(db).get(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-                logger.info("select db reply: {}", selectReply);
-            } catch (InterruptedException e) {
-                throw new RedisException(e);
-            } catch (ExecutionException e) {
-                throw new RedisException(e);
-            } catch (TimeoutException e) {
-                throw new RedisException(e);
-            }
-        }
-        isAvailable.set(true);
         if (connectedHandler != null)
             connectedHandler.onConnected(this);
     }
 
     @PreDestroy
     public void close() throws InterruptedException {
-        channel.close().await(500);
+        if (handler != null) {
+            handler.channel.close().await(500);
+        } else {
+            for (HandlerWorker worker : workers) {
+                worker.handler.channel.close().await(500);
+            }
+        }
         timer.stop();
-        nioClientSocketChannelFactory.releaseExternalResources();
+
 
     }
 
+//    int current = 0;
+//
+//    void next() {
+//        current += 1;
+//        if (current >= connectionNumber) current = 0;
+//    }
 
-    private synchronized Future sendCommand(Commands commands, Transcoder transcoder, Object... args) {
-        @SuppressWarnings("unchecked") Command command = commands.getCommand(transcoder, args);
-//        logger.debug("redis command is : {}", command.toString());
+    private Future sendCommand(Commands commands, Transcoder transcoder, Object... args) {
+//        @SuppressWarnings("unchecked") Command command = commands.getCommand(transcoder, args);
+        if (handler != null) {
+            return handler.sendCommand(commands, transcoder, args);
+        }
 
-        channel.write(command);
-//        System.out.println(Thread.currentThread().getName());
-        return command.getReply();
+        Future f = currentWorker.handler.sendCommand(commands, transcoder, args);
+        currentWorker = currentWorker.next;
+        return f;
+//        return handlers.get(current).
     }
 
 
@@ -1227,65 +1298,19 @@ public class NettyRedisClient extends SimpleChannelHandler implements AsyncRedis
         return sendCommand(Commands.SLAVEOF, Transcoder.STRING_TRANSCODER, host, port);
     }
 
-    final BlockingQueue<Command> commandQueue = new LinkedBlockingQueue<Command>();
-
-    @Override
-    public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        if (!e.getChannel().isWritable()) throw new RedisException("Channel not writable now!");
-//        System.out.println(Thread.currentThread().getName());
-//        synchronized (commandQueue) {
-            Command message = (Command) e.getMessage();
-            logger.debug("send command [{}]", message.getName());
-            Channels.write(ctx, e.getFuture(), CommandEncoder.encode(message));
-            commandQueue.put(message);
-//        }
-//        ctx.sendDownstream(e);
-    }
-
 
     public void closeForTest() {
         try {
-            channel.close().await(500);
-        } catch (InterruptedException e) {
+            if (handler != null) {
+                handler.channel.close().await(500);
+            } else {
+                for (HandlerWorker worker : workers) {
+                    worker.handler.channel.close().await(500);
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void messageReceived(
-            ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        logger.debug("messageReceived");
-        Reply reply = (Reply) e.getMessage();
-        Command command = commandQueue.take();
-        command.setResult(reply);
-        logger.debug("receive command [{}] 's reply", command.getName());
-        ctx.sendUpstream(e);
-
-    }
-
-    @Override
-    public synchronized void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        channel = ctx.getChannel();
-        commandQueue.clear();
-        isAvailable.set(true);
-    }
-
-    @Override
-    public synchronized void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        //连接断开后清空当前的commandQueue ,
-        commandQueue.clear();
-        isAvailable.set(false);
-        if (closedHandler != null) closedHandler.onClosed(this);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        logger.error("exception : ", e.getCause());
-        //TODO 是不是所有的异常都需要关闭连接？
-        if (ctx.getChannel().isOpen())
-            ctx.getChannel().close();
 
     }
 }

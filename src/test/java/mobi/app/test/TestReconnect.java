@@ -12,6 +12,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TestReconnect {
     public static void main(String[] args){
-        RedisClient client = new SyncRedisClient("172.16.3.214:6379", 1, null, 1, TimeUnit.SECONDS);
+        RedisClient client = new SyncRedisClient("172.16.3.214:6379", 1, null, 1, TimeUnit.SECONDS, 1);
     }
 }

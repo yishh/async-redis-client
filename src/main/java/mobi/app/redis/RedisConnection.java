@@ -14,6 +14,7 @@ public class RedisConnection {
     public final int timeout;
     public final TimeUnit timeUnit;
     public final int weight;
+    public final int connectionNumber;
 
     public RedisConnection(String address, int db, String password, int timeout, TimeUnit timeUnit) {
         this.address = address;
@@ -22,14 +23,16 @@ public class RedisConnection {
         this.timeout = timeout;
         this.timeUnit = timeUnit;
         this.weight = 1;
+        this.connectionNumber = 1;
     }
 
-    public RedisConnection(String address, int db, String password, int timeout, TimeUnit timeUnit, int weight) {
+    public RedisConnection(String address, int db, String password, int timeout, TimeUnit timeUnit, int weight, int connectionNumber) {
         this.address = address;
         this.db = db;
         this.password = password;
         this.timeout = timeout;
         this.timeUnit = timeUnit;
         this.weight = weight;
+        this.connectionNumber = connectionNumber;
     }
 }

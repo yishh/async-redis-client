@@ -18,13 +18,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReconnectHandler extends SimpleChannelHandler implements TimerTask {
     private final static Logger logger = LoggerFactory.getLogger(ReconnectHandler.class);
-    private final Timer timer;
+    private  Timer timer;
     private int attempts;
-    private final NettyRedisClient client;
+    private  NettyRedisClient client;
+    RedisChannelHandler handler;
 
-    public ReconnectHandler(NettyRedisClient client, Timer timer) {
-        this.client = client;
-        this.timer = timer;
+    public ReconnectHandler() {
+//        this.client = client;
+//        this.timer = timer;
     }
 
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
@@ -35,6 +36,7 @@ public class ReconnectHandler extends SimpleChannelHandler implements TimerTask 
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         int timeout = 2 << attempts;
         if (attempts < 12) attempts++;
+        handler = (RedisChannelHandler) ctx.getChannel().getPipeline().getLast();
         logger.info("after " + timeout + " seconds will reconnect");
         timer.newTimeout(this, timeout, TimeUnit.SECONDS);
         ctx.sendUpstream(e);
@@ -44,6 +46,14 @@ public class ReconnectHandler extends SimpleChannelHandler implements TimerTask 
 
     @Override
     public void run(Timeout timeout) throws Exception {
-        client.init();
+        client.reconnect(handler);
+    }
+
+    public void setClient(NettyRedisClient client) {
+        this.client = client;
+    }
+
+    public void setTimer(Timer timer) {
+        this.timer = timer;
     }
 }

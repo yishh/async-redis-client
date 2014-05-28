@@ -21,15 +21,19 @@ public class SyncRedisClient implements RedisClient {
     final String hashKey;
 
     public SyncRedisClient(RedisConnection connection) {
-        this(connection.address, connection.db, connection.password, connection.timeout, connection.timeUnit);
+        this(connection.address, connection.db, connection.password, connection.timeout, connection.timeUnit, connection.connectionNumber);
     }
 
     public SyncRedisClient(String address, int db,  int timeout, TimeUnit timeUnit) {
-        this(address, db, null, timeout, timeUnit);
+        this(address, db, null, timeout, timeUnit, 1);
     }
 
-    public SyncRedisClient(String address, int db, String password, int timeout, TimeUnit timeUnit) {
-        asyncClient = new NettyRedisClient(address, db, password);
+    public SyncRedisClient(String address, int db,  int timeout, TimeUnit timeUnit, int connectionNumber) {
+        this(address, db, null, timeout, timeUnit, connectionNumber);
+    }
+
+    public SyncRedisClient(String address, int db, String password, int timeout, TimeUnit timeUnit, int connectionNumber) {
+        asyncClient = new NettyRedisClient(address, db, password, connectionNumber);
         this.timeout = timeout;
         this.timeUnit = timeUnit;
         hashKey = String.format("%s|%s", address, db);

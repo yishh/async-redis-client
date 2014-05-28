@@ -17,12 +17,12 @@ public class TestKetamaRouter {
 
     public static void main(String[] args) {
         Map<RedisClient, Integer> map = new HashMap<RedisClient, Integer>();
-        map.put(new SyncRedisClient("172.16.3.213:6379", 0, null, 1, TimeUnit.SECONDS), 1);
-        map.put(new SyncRedisClient("172.16.3.213:6379", 1, null, 1, TimeUnit.SECONDS), 1);
-        map.put(new SyncRedisClient("172.16.3.213:6379", 2, null, 1, TimeUnit.SECONDS), 1);
-        map.put(new SyncRedisClient("172.16.3.213:6379", 3, null, 1, TimeUnit.SECONDS), 1);
-        map.put(new SyncRedisClient("172.16.3.213:6379", 4, null, 1, TimeUnit.SECONDS), 1);
-        map.put(new SyncRedisClient("172.16.3.213:6379", 5, null, 1, TimeUnit.SECONDS), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 0, null, 1, TimeUnit.SECONDS, 1), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 1, null, 1, TimeUnit.SECONDS, 1), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 2, null, 1, TimeUnit.SECONDS, 1), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 3, null, 1, TimeUnit.SECONDS, 1), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 4, null, 1, TimeUnit.SECONDS, 1), 1);
+        map.put(new SyncRedisClient("172.16.3.213:6379", 5, null, 1, TimeUnit.SECONDS, 1), 1);
 
         Map<String, Integer> countMap = new HashMap<String, Integer>();
         countMap.put("172.16.3.213:6379|0", 0);
